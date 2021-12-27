@@ -316,8 +316,8 @@ C_Status ExtraPaddingSize(const C_Device device, size_t *size) {
   return C_SUCCESS;
 }
 
-void InitPlugin(DevicePluginParams *params) {
-  if (params->size != sizeof(DevicePluginParams) &&
+void InitPlugin(RuntimePluginParams *params) {
+  if (params->size != sizeof(RuntimePluginParams) &&
       params->interface->size != sizeof(C_DeviceInterface)) {
     return;
   }

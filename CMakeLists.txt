@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(paddle-ascend910 CXX C)
 
 option(WITH_TESTING     "Compile Plugin with unit testing"        OFF)
-option(WITH_KERNELS     "Build cuostom kernels"                   OFF)
+option(WITH_KERNELS     "Build custom kernels"                    OFF)
 
 set(PLUGIN_NAME "paddle_ascend910")
 set(PLUGIN_VERSION "0.0.1")
