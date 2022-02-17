@@ -11,12 +11,12 @@ class BinaryDistribution(Distribution):
     def has_ext_modules(self):
         return True
 
-for pkg_dir in ['build/python/paddle/plugins/pluggable_devices', 'build/python/paddle/plugins/custom_kernels']:
+for pkg_dir in ['build/python/paddle-plugins/']:
     if os.path.exists(pkg_dir):
         shutil.rmtree(pkg_dir)
     os.makedirs(pkg_dir)
 
-ext_modules = [Extension(name='paddle.plugins.pluggable_devices.libpaddle_ascend910',
+ext_modules = [Extension(name='paddle-plugins.libpaddle_ascend910',
                          sources=['runtime/runtime.cc'],
                          include_dirs=['/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/include/',
                                        '/opt/conda/lib/python3.7/site-packages/paddle/include/'],
@@ -37,10 +37,7 @@ setup(
     license='Apache Software License',
     ext_modules=ext_modules,
     packages=[
-        'paddle',
-        'paddle.plugins',
-        'paddle.plugins.pluggable_devices',
-        'paddle.plugins.custom_kernels'
+        'paddle-plugins',
     ],
     include_package_data=True,
     package_data={

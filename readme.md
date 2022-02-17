@@ -40,11 +40,11 @@ $ pip install dist/*.whl
 ```python
 $ python
 >>> import paddle
->>> paddle.fluid.core.list_all_pluggable_device()
+>>> paddle.device.get_all_custom_device_type()
 ['Ascend910']
 >>> paddle.set_device('Ascend910')
 >>> x = paddle.to_tensor([1])
 >>> x
-Tensor(shape=[1], dtype=int64, place=PluggableDevicePlace(Ascend910: 0), stop_gradient=True,
+Tensor(shape=[1], dtype=int64, place=Place(Ascend910:0), stop_gradient=True,
        [1])
 ```

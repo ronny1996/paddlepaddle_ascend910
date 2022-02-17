@@ -19,10 +19,7 @@ setup(
     project_urls={},
     license='Apache Software License',
     packages= [
-        'paddle', 
-        'paddle.plugins',
-        'paddle.plugins.pluggable_devices',
-        'paddle.plugins.custom_kernels'
+        'paddle-plugins',
     ],
     include_package_data=True,
     package_data = {

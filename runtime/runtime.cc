@@ -168,6 +168,14 @@ C_Status GetDevicesCount(size_t *count) {
   return C_SUCCESS;
 }
 
+C_Status GetDevicesList(size_t *device) {
+  size_t count = get_devices_count();
+  for (size_t dev_id = 0; dev_id < count; dev_id++) {
+    device[dev_id] = dev_id;
+  }
+  return C_SUCCESS;
+}
+
 C_Status MemCpyH2D(const C_Device device, void *dst, const void *src,
                    size_t size) {
   ACL_CHECK(aclrtMemcpy(dst, size, src, size, ACL_MEMCPY_HOST_TO_DEVICE));
@@ -316,17 +324,17 @@ C_Status ExtraPaddingSize(const C_Device device, size_t *size) {
   return C_SUCCESS;
 }
 
-void InitPlugin(RuntimePluginParams *params) {
-  if (params->size != sizeof(RuntimePluginParams) &&
+void InitPlugin(CustomRuntimeParams *params) {
+  if (params->size != sizeof(CustomRuntimeParams) &&
       params->interface->size != sizeof(C_DeviceInterface)) {
     return;
   }
 
   params->device_type = "Ascend910";
   params->sub_device_type = "V100";
-  params->version.major = PADDLE_DEVICE_PLUGIN_MAJOR_VERSION;
-  params->version.minor = PADDLE_DEVICE_PLUGIN_MINOR_VERSION;
-  params->version.patch = PADDLE_DEVICE_PLUGIN_PATCH_VERSION;
+  params->version.major = PADDLE_CUSTOM_RUNTIME_MAJOR_VERSION;
+  params->version.minor = PADDLE_CUSTOM_RUNTIME_MINOR_VERSION;
+  params->version.patch = PADDLE_CUSTOM_RUNTIME_PATCH_VERSION;
 
   memset((void *)params->interface, 0, sizeof(C_DeviceInterface));
 
@@ -353,15 +361,18 @@ void InitPlugin(RuntimePluginParams *params) {
   params->interface->memory_copy_h2d = MemCpyH2D;
   params->interface->memory_copy_d2d = MemCpyD2D;
   params->interface->memory_copy_d2h = MemCpyD2H;
+  params->interface->memory_copy_p2p = nullptr;
   params->interface->async_memory_copy_h2d = AsyncMemCpyH2D;
   params->interface->async_memory_copy_d2d = AsyncMemCpyD2D;
   params->interface->async_memory_copy_d2h = AsyncMemCpyD2H;
+  params->interface->async_memory_copy_p2p = nullptr;
   params->interface->device_memory_allocate = Allocate;
   params->interface->host_memory_allocate = HostAllocate;
   params->interface->device_memory_deallocate = Deallocate;
   params->interface->host_memory_deallocate = HostDeallocate;
 
-  params->interface->visible_devices_count = GetDevicesCount;
+  params->interface->get_device_count = GetDevicesCount;
+  params->interface->get_device_list = GetDevicesList;
   params->interface->device_memory_stats = DeviceMemStats;
 
   params->interface->device_min_chunk_size = DeviceMinChunkSize;
