@@ -16,19 +16,32 @@ set(PADDLE_LIB_DIR     "/opt/conda/lib/python3.7/site-packages/paddle/fluid/")
 set(NPU_INC_DIR        "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/include/")
 set(NPU_LIB_DIR        "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64/")
 
-include_directories(${PADDLE_INC_DIR} ${NPU_INC_DIR})
+# third-party deps
+set(BOOST_INC_DIR      "/workspace/dev/Paddle/build/third_party/boost/src/extern_boost")
+set(GFLAGS_INC_DIR     "/workspace/dev/Paddle/build/third_party/install/gflags/include")
+set(GLOG_INC_DIR       "/workspace/dev/Paddle/build/third_party/install/glog/include")
+set(THIRD_PARTY_INC_DIR ${BOOST_INC_DIR} ${GFLAGS_INC_DIR} ${GLOG_INC_DIR})
+
+include_directories(${PADDLE_INC_DIR} ${NPU_INC_DIR} ${THIRD_PARTY_INC_DIR})
 link_directories(${PADDLE_LIB_DIR} ${NPU_LIB_DIR})
 
 set(PLUGIN_SRCS runtime/runtime.cc)
 
 if (WITH_KERNELS)
-file(GLOB PLUGIN_KERNEL_FILES RELATIVE ${CMAKE_SOURCE_DIR} kernels/*_kernel.cc)
-set(PLUGIN_SRCS ${PLUGIN_SRCS} ${PLUGIN_KERNEL_FILES})
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+add_definitions(-DPADDLE_WITH_CUSTOM_DEVICE)
+add_definitions(-DPADDLE_WITH_CUSTOM_KERNEL)
+add_definitions(-Wno-write-strings)
+file(GLOB PLUGIN_KERNEL_FILES RELATIVE ${CMAKE_SOURCE_DIR} kernels/*.cc)
+list(APPEND PLUGIN_SRCS ${PLUGIN_KERNEL_FILES})
 endif()
 
 ####### build shared library
 add_library(${PLUGIN_NAME} SHARED ${PLUGIN_SRCS})
 target_link_libraries(${PLUGIN_NAME} PRIVATE ascendcl)
+if (WITH_KERNELS)
+target_link_libraries(${PLUGIN_NAME} PRIVATE :core_avx.so)  # special name
+endif()
 
 install(TARGETS ${PLUGIN_NAME} 
 PERMISSIONS OWNER_EXECUTE OWNER_READ OWNER_WRITE GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ 
