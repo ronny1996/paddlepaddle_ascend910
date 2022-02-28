@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 
 #include "npu_op_runner.h"
+#include "npu_enforce.h"
 
 #include <map>
 #include "acl/acl_op_compiler.h"
@@ -38,13 +39,19 @@ static std::map<paddle::experimental::DataLayout, aclFormat> DATA_LAYOUT_2_ACL_F
 
 aclDataType ConvertToNpuDtype(paddle::experimental::DataType dtype) {
   auto iter = DTYPE_2_ACL_DTYPE.find(dtype);
-  PD_CHECK(iter != DTYPE_2_ACL_DTYPE.end());
+  PADDLE_ENFORCE_NE(iter, DTYPE_2_ACL_DTYPE.end(),
+                    phi::errors::NotFound(
+                        "The data type %s can not convert to ACL data type.",
+                        dtype));
   return iter->second;
 }
 
 aclFormat ConvertToNpuFormat(paddle::experimental::DataLayout layout) {
   auto iter = DATA_LAYOUT_2_ACL_FORMAT.find(layout);
-  PD_CHECK(iter != DATA_LAYOUT_2_ACL_FORMAT.end());
+  PADDLE_ENFORCE_NE(
+      iter, DATA_LAYOUT_2_ACL_FORMAT.end(),
+      phi::errors::NotFound(
+          "The data type (%s) can not convert to ACL data type.", layout));
   return iter->second;
 }
 
@@ -72,10 +79,10 @@ NpuOpRunner::~NpuOpRunner() {
     aclDestroyTensorDesc(desc);
   }
   for (auto buffer : input_buffers_) {
-    PD_CHECK(ACL_ERROR_NONE == aclDestroyDataBuffer(buffer));
+    PADDLE_ENFORCE_NPU_SUCCESS(aclDestroyDataBuffer(buffer));
   }
   for (auto buffer : output_buffers_) {
-    PD_CHECK(ACL_ERROR_NONE == aclDestroyDataBuffer(buffer));
+    PADDLE_ENFORCE_NPU_SUCCESS(aclDestroyDataBuffer(buffer));
   }
 }
 
@@ -92,17 +99,16 @@ NpuOpRunner &NpuOpRunner::AddAttr(const std::string &name,
     attr_ = aclopCreateAttr();
   }
   if (attr.type() == typeid(bool)) {
-    PD_CHECK(ACL_ERROR_NONE ==
+    PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrBool(attr_, name.c_str(), boost::get<bool>(attr)));
   } else if (attr.type() == typeid(int)) {
-    PD_CHECK(ACL_ERROR_NONE ==
+    PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrInt(attr_, name.c_str(), boost::get<int>(attr)));
-
   } else if (attr.type() == typeid(int64_t)) {
-    PD_CHECK(ACL_ERROR_NONE ==
+    PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrInt(attr_, name.c_str(), boost::get<int64_t>(attr)));
   } else if (attr.type() == typeid(float)) {
-    PD_CHECK(ACL_ERROR_NONE ==
+    PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrFloat(attr_, name.c_str(), boost::get<float>(attr)));
   } else if (attr.type() == typeid(std::vector<bool>)) {
     auto a = boost::get<std::vector<bool>>(attr);
@@ -110,7 +116,7 @@ NpuOpRunner &NpuOpRunner::AddAttr(const std::string &name,
     for (auto it : a) {
       cast_a.push_back(static_cast<uint8_t>(it));
     }
-    PD_CHECK(ACL_ERROR_NONE ==aclopSetAttrListBool(
+    PADDLE_ENFORCE_NPU_SUCCESS(aclopSetAttrListBool(
         attr_, name.c_str(), cast_a.size(), cast_a.data()));
   } else if (attr.type() == typeid(std::vector<int>)) {
     auto a = boost::get<std::vector<int>>(attr);
@@ -118,19 +124,19 @@ NpuOpRunner &NpuOpRunner::AddAttr(const std::string &name,
     for (auto it : a) {
       cast_a.push_back(static_cast<int64_t>(it));
     }
-    PD_CHECK(ACL_ERROR_NONE == 
+    PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrListInt(attr_, name.c_str(), cast_a.size(), cast_a.data()));
   } else if (attr.type() == typeid(std::vector<int64_t>)) {
     auto a = boost::get<std::vector<int64_t>>(attr);
-    PD_CHECK(ACL_ERROR_NONE == 
+    PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrListInt(attr_, name.c_str(), a.size(), a.data()));
   } else if (attr.type() == typeid(std::vector<float>)) {
     auto a = boost::get<std::vector<float>>(attr);
-    PD_CHECK(ACL_ERROR_NONE == 
+    PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrListFloat(attr_, name.c_str(), a.size(), a.data()));
   } else if (attr.type() == typeid(std::string)) {
     auto a = boost::get<std::string>(attr);
-    PD_CHECK(ACL_ERROR_NONE == 
+    PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrString(attr_, name.c_str(), a.c_str()));
   } else if (attr.type() == typeid(std::vector<std::string>)) {
     auto a = boost::get<std::vector<std::string>>(attr);
@@ -138,7 +144,7 @@ NpuOpRunner &NpuOpRunner::AddAttr(const std::string &name,
     for (auto &it : a) {
       s.push_back(it.data());
     }
-    PD_CHECK(ACL_ERROR_NONE == 
+    PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrListString(attr_, name.c_str(), s.size(), s.data()));
   } else if (attr.type() == typeid(std::vector<std::vector<int64_t>>)) {
     auto a = boost::get<std::vector<std::vector<int64_t>>>(attr);
@@ -148,25 +154,28 @@ NpuOpRunner &NpuOpRunner::AddAttr(const std::string &name,
       data.push_back(v.data());
       num.push_back(v.size());
     }
-    PD_CHECK(ACL_ERROR_NONE == aclopSetAttrListListInt(
+    PADDLE_ENFORCE_NPU_SUCCESS(aclopSetAttrListListInt(
         attr_, name.c_str(), data.size(), num.data(), data.data()));
   } else {
-    PD_CHECK(false,
-        "Can not convert attribubte '%s' to convert to aclopAttr", name);
+    PADDLE_THROW(phi::errors::Unimplemented(
+        "Can not convert attribubte '%s' to convert to aclopAttr", name));
   }
   return *this;
 }
 
 NpuOpRunner &NpuOpRunner::AddAttrDataType(const std::string &name,
                                           const NPUAttribute &attr) {
-  PD_CHECK(attr.type() == typeid(int));
+  PADDLE_ENFORCE_EQ(
+      (attr.type() == typeid(int)), true,
+      phi::errors::InvalidArgument(
+          "Attr type is NOT equal to framework::proto::VarType::Type."));
   if (!attr_) {
     attr_ = aclopCreateAttr();
   }
   VLOG(4) << "AddAttrDataType call";
   auto dtype = ConvertToNpuDtype(
       static_cast<paddle::experimental::DataType>(boost::get<int>(attr)));
-  PD_CHECK(ACL_ERROR_NONE == aclopSetAttrDataType(attr_, name.c_str(), dtype));
+  PADDLE_ENFORCE_NPU_SUCCESS(aclopSetAttrDataType(attr_, name.c_str(), dtype));
   return *this;
 }
 
@@ -216,7 +225,12 @@ NpuOpRunner &NpuOpRunner::AddInputs(const std::vector<Tensor> &tensors) {
 // NOTE(zhiqiu): For operators whose input is a list (such as concat, stack),
 // It is needed to set the name of each input tensor.
 NpuOpRunner &NpuOpRunner::AddInputNames(const std::vector<std::string> &names) {
-  PD_CHECK(names.size() == input_descs_.size());
+  PADDLE_ENFORCE_EQ(names.size(), input_descs_.size(),
+                    phi::errors::InvalidArgument(
+                        "The size of input names should be "
+                        "equal to the size of input descs, but got the size "
+                        "of input names is %d, the size of input descs is %d.",
+                        names.size(), input_descs_.size()));
   for (size_t i = 0; i < names.size(); ++i) {
     aclSetTensorDescName(input_descs_[i], names[i].c_str());
   }
@@ -236,12 +250,20 @@ NpuOpRunner &NpuOpRunner::AddOutputs(const std::vector<Tensor> &tensors) {
 }
 
 aclTensorDesc *NpuOpRunner::GetInputDesc(size_t index) {
-  PD_CHECK(index < input_descs_.size());
+  PADDLE_ENFORCE_LT(index, input_descs_.size(),
+                    phi::errors::OutOfRange(
+                        "The index should be less than the size of inputs of "
+                        "operator %s, but got index is %d and size is %d",
+                        Type(), index, input_descs_.size()));
   return input_descs_[index];
 }
 
 aclTensorDesc *NpuOpRunner::GetOutputDesc(size_t index) {
-  PD_CHECK(index < output_descs_.size());
+  PADDLE_ENFORCE_LT(index, output_descs_.size(),
+                    phi::errors::OutOfRange(
+                        "The index should be less than the size of output of "
+                        "operator %s, but got index is %d and size is %d",
+                        Type(), index, output_descs_.size()));
   return output_descs_[index];
 }
 
@@ -277,11 +299,12 @@ aclTensorDesc *NpuOpRunner::CreateTensorDesc(Tensor tensor,
           << " format:" << format;
 
   auto *desc = aclCreateTensorDesc(dtype, size, dims.data(), format);
-  PD_CHECK(desc != NULL);
-  PD_CHECK(ACL_ERROR_NONE == aclSetTensorStorageFormat(desc, format));
-  PD_CHECK(ACL_ERROR_NONE == aclSetTensorStorageShape(desc, size, dims.data()));
+  PADDLE_ENFORCE_NOT_NULL(
+      desc, phi::errors::External("Call aclCreateTensorDesc failed."));
+  PADDLE_ENFORCE_NPU_SUCCESS(aclSetTensorStorageFormat(desc, format));
+  PADDLE_ENFORCE_NPU_SUCCESS(aclSetTensorStorageShape(desc, size, dims.data()));
   if (mem_type == ACL_MEMTYPE_HOST) {
-    PD_CHECK(ACL_ERROR_NONE == aclSetTensorPlaceMent(desc, mem_type));
+    PADDLE_ENFORCE_NPU_SUCCESS(aclSetTensorPlaceMent(desc, mem_type));
   }
   return desc;
 }
@@ -290,12 +313,14 @@ aclDataBuffer *NpuOpRunner::CreateDataBuffer(Tensor tensor) {
   void *ptr = tensor.data();
   VLOG(4) << "NPU ptr: " << ptr << ", size: " << tensor.memory_size();
   auto *buffer = aclCreateDataBuffer(ptr, tensor.memory_size());
-  PD_CHECK(buffer != NULL);
+  PADDLE_ENFORCE_NOT_NULL(
+      buffer, phi::errors::External("Call aclCreateDataBuffer failed."));
   return buffer;
 }
 
 void NpuOpRunner::Run(aclrtStream stream) const {
-  PD_CHECK(stream != NULL);
+  PADDLE_ENFORCE_NOT_NULL(
+      stream, phi::errors::External("Stream should not be null, please check."));
 
   VLOG(5) << "NpuOpRunner(" << this << ") Run:";
   VLOG(4) << "op_type: " << op_type_;
@@ -310,5 +335,5 @@ void NpuOpRunner::Run(aclrtStream stream) const {
       output_buffers_.data(), attr_, ACL_ENGINE_SYS, ACL_COMPILE_SYS, NULL,
       stream);
   VLOG(4) << "after aclopCompileAndExecute: " << ret;
-  PD_CHECK(ACL_ERROR_NONE == ret);
+  PADDLE_ENFORCE_NPU_SUCCESS(ret);
 }
