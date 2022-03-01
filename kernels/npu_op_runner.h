@@ -21,6 +21,10 @@ limitations under the License. */
 
 #include "acl/acl.h"
 
+
+aclDataType ConvertToNpuDtype(paddle::experimental::DataType dtype);
+aclFormat ConvertToNpuFormat(paddle::experimental::DataLayout layout);
+
 using NPUAttribute =
     boost::variant<boost::blank, int, float, std::string, std::vector<int>,
                    std::vector<float>, std::vector<std::string>, bool,
@@ -86,6 +90,71 @@ class NpuOpRunner {
   std::vector<aclDataBuffer *> &GetOutputBuffers();
 
   void Run(aclrtStream stream = nullptr) const;
+
+  static void TypeAdapter(
+      const std::vector<phi::DenseTensor> &inputs, const std::vector<phi::DenseTensor> &outputs,
+      const NPUAttributeMap &attrs, const phi::CustomContext &dev_ctx,
+      std::function<void(const std::vector<phi::DenseTensor> &,
+                         const std::vector<phi::DenseTensor> &, const NPUAttributeMap &,
+                         const phi::CustomContext &)> op_runner,
+      const std::vector<paddle::experimental::DataType> &input_type,
+      const std::vector<paddle::experimental::DataType> &output_type) {
+  // PADDLE_ENFORCE_EQ(
+  //     inputs.size(), input_type.size(),
+  //     platform::errors::InvalidArgument(
+  //         "The number of inputs must be equal to input_type.size()."));
+  // PADDLE_ENFORCE_EQ(
+  //     outputs.size(), output_type.size(),
+  //     platform::errors::InvalidArgument(
+  //         "The number of outputs must be equal to output_type.size()."));
+
+        std::vector<phi::DenseTensor> tmp_inputs(inputs.size());
+        std::vector<phi::DenseTensor> tmp_outputs(outputs.size());
+
+        for (size_t i = 0; i < input_type.size(); ++i) {
+            bool cast_input =
+                (input_type[i] == paddle::experimental::DataType::UNDEFINED ||
+                input_type[i] != inputs[i].dtype());
+            if (!cast_input) {
+            tmp_inputs[i].ShareDataWith(inputs[i]);
+            } else {
+            tmp_inputs[i].Resize(inputs[i].dims());
+            tmp_inputs[i].mutable_data(dev_ctx.GetPlace(), input_type[i]);
+
+            const auto &cast_runner = NpuOpRunner(
+                "Cast", {inputs[i]}, {tmp_inputs[i]},
+                {{"dst_type", static_cast<int>(ConvertToNpuDtype(input_type[i]))}});
+            cast_runner.Run(dev_ctx.stream());
+            }
+        }
+        for (size_t i = 0; i < output_type.size(); ++i) {
+            bool cast_output =
+                (output_type[i] == paddle::experimental::DataType::UNDEFINED ||
+                output_type[i] != outputs[i].dtype());
+            if (!cast_output) {
+            tmp_outputs[i].ShareDataWith(outputs[i]);
+            } else {
+            tmp_outputs[i].Resize(outputs[i].dims());
+            tmp_outputs[i].mutable_data(
+                dev_ctx.GetPlace(), output_type[i]);
+            }
+        }
+
+        op_runner(tmp_inputs, tmp_outputs, attrs, dev_ctx);
+
+        for (size_t i = 0; i < output_type.size(); ++i) {
+            bool cast_output =
+                (output_type[i] == paddle::experimental::DataType::UNDEFINED ||
+                output_type[i] != outputs[i].dtype());
+            if (cast_output) {
+            const auto &cast_runner = NpuOpRunner(
+                "Cast", {tmp_outputs[i]}, {outputs[i]},
+                {{"dst_type",
+                    static_cast<int>(ConvertToNpuDtype(outputs[i].dtype()))}});
+            cast_runner.Run(dev_ctx.stream());
+            }
+        }
+      }
 
  private:
   aclTensorDesc *CreateTensorDesc(phi::DenseTensor tensor,

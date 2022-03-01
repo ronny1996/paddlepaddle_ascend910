@@ -5,28 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <acl/acl.h>
-
-#include "paddle/device_ext.h"
-
-#define ACL_CHECK(func)                                                       \
-  do {                                                                        \
-    auto acl_ret = func;                                                      \
-    if (acl_ret != ACL_ERROR_NONE) {                                          \
-      std::cerr << "Call " << #func << " failed : " << acl_ret << " at file " \
-                << __FILE__ << " line " << __LINE__ << std::endl;             \
-      {                                                                       \
-        const char *aclRecentErrMsg = nullptr;                                \
-        aclRecentErrMsg = aclGetRecentErrMsg();                               \
-        if (aclRecentErrMsg != nullptr) {                                     \
-          printf("%s\n", aclRecentErrMsg);                                    \
-        } else {                                                              \
-          printf("Failed to get recent error message.\n");                    \
-        }                                                                     \
-      }                                                                       \
-      exit(-1);                                                               \
-    }                                                                         \
-  } while (0)
+#include "runtime.h"
 
 class AlignnedAllocator {
  public:
