@@ -40,7 +40,13 @@ endif()
 add_library(${PLUGIN_NAME} SHARED ${PLUGIN_SRCS})
 target_link_libraries(${PLUGIN_NAME} PRIVATE ascendcl)
 if (WITH_KERNELS)
-target_link_libraries(${PLUGIN_NAME} PRIVATE :core_avx.so)  # special name
+find_file(CORE_AVX_FOUND core_avx.so ${PADDLE_LIB_DIR})
+if (CORE_AVX_FOUND)
+set(CORE_LIB ":core_avx.so")
+else()
+set(CORE_LIB ":core_noavx.so")
+endif()
+target_link_libraries(${PLUGIN_NAME} PRIVATE ${CORE_LIB})  # special name
 endif()
 
 install(TARGETS ${PLUGIN_NAME} 
