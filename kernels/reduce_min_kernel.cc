@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "npu_op_runner.h"
 #include "npu_funcs.h"
+#include "npu_op_runner.h"
 
 namespace custom_kernel {
 
 template <typename T, typename Context>
 void MinRawKernel(const Context& dev_ctx, const phi::DenseTensor& x,
-                    const std::vector<int64_t>& axes, bool keep_dim,
-                    bool reduce_all, phi::DenseTensorMeta::DataType out_dtype,
-                    phi::DenseTensor* out) {
+                  const std::vector<int64_t>& axes, bool keep_dim,
+                  bool reduce_all, phi::DenseTensorMeta::DataType out_dtype,
+                  phi::DenseTensor* out) {
   phi::DenseTensor cast_out;
   auto dims = axes;
   cast_out.Resize(out->dims());
@@ -63,23 +63,23 @@ void MinRawKernel(const Context& dev_ctx, const phi::DenseTensor& x,
     attr_input = {{"axes", dim_vec}, {"keep_dims", keep_dim}};
   }
 
-  // if (x.dtype() == experimental::DataType::INT64) {
-  //   auto op_func = [](const std::vector<Tensor>& inputs,
-  //                     const std::vector<Tensor>& outputs,
-  //                     const NPUAttributeMap& attrs,
-  //                     const platform::NPUDeviceContext& dev_ctx) {
-  //     const auto& runner =
-  //         NpuOpRunner("ReduceMinD", {inputs[0]}, {outputs[0]}, attrs);
-  //     runner.Run(dev_ctx.stream());
-  //   };
+  if (x.dtype() == phi::DenseTensorMeta::DataType::INT64) {
+    auto op_func = [](const std::vector<phi::DenseTensor>& inputs,
+                      const std::vector<phi::DenseTensor>& outputs,
+                      const NPUAttributeMap& attrs,
+                      const phi::CustomContext& dev_ctx) {
+      const auto& runner =
+          NpuOpRunner("ReduceMinD", {inputs[0]}, {outputs[0]}, attrs);
+      runner.Run(dev_ctx.stream());
+    };
 
-  //   NpuOpRunner::TypeAdapter({*x}, {cast_out}, attr_input, dev_ctx, op_func,
-  //                            {framework::proto::VarType::INT32},
-  //                            {framework::proto::VarType::INT32});
-  // } else {
-  const auto& runner = NpuOpRunner("ReduceMinD", {x}, {cast_out}, attr_input);
-  runner.Run(dev_ctx.stream());
-  // }
+    NpuOpRunner::TypeAdapter({x}, {cast_out}, attr_input, dev_ctx, op_func,
+                             {phi::DenseTensorMeta::DataType::INT32},
+                             {phi::DenseTensorMeta::DataType::INT32});
+  } else {
+    const auto& runner = NpuOpRunner("ReduceMinD", {x}, {cast_out}, attr_input);
+    runner.Run(dev_ctx.stream());
+  }
 
   if (x.dtype() != cast_out_dtype) {
     auto dst_dtype = ConvertToNpuDtype(cast_out_dtype);
@@ -92,9 +92,9 @@ void MinRawKernel(const Context& dev_ctx, const phi::DenseTensor& x,
 
 template <typename T, typename Context>
 void MinKernel(const Context& dev_ctx, const phi::DenseTensor& x,
-                const std::vector<int64_t>& dims,
-                phi::DenseTensorMeta::DataType out_dtype, bool keep_dim,
-                phi::DenseTensor* out) {
+               const std::vector<int64_t>& dims,
+               phi::DenseTensorMeta::DataType out_dtype, bool keep_dim,
+               phi::DenseTensor* out) {
   bool reduce_all = false;
   MinRawKernel<T>(dev_ctx, x, dims, keep_dim, reduce_all, out_dtype, out);
 }
