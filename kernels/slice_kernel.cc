@@ -82,7 +82,7 @@ void SliceKernel(const Context& dev_ctx,
       out->Resize(out_dims);
     }
 
-    out->mutable_data<T>(ctx.GetPlace());
+    dev_ctx.template Alloc<T>(out);
 
     std::vector<int> offsets(in_dims.size());
     std::vector<int> size(in_dims.size());

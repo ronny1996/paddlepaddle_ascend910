@@ -59,9 +59,9 @@ void SoftmaxWithCrossEntropyKernel(const Context& dev_ctx,
             "but got size of labels is %d and phi::funcs::SizeToAxis is %d.",
             labels.numel(), n));
 
-    loss->mutable_data<T>(dev_ctx.GetPlace());
-    backprop->mutable_data<T>(dev_ctx.GetPlace());
-    softmax->mutable_data<T>(dev_ctx.GetPlace());
+    dev_ctx.template Alloc<T>(loss);
+    dev_ctx.template Alloc<T>(backprop);
+    dev_ctx.template Alloc<T>(softmax);
 
     phi::DenseTensor logits_2d, labels_1d, loss_1d, backprop_2d, softmax_2d;
     logits_2d.ShareDataWith(logits).Resize({n, d});
@@ -98,8 +98,7 @@ void SoftmaxWithCrossEntropyGradKernel(const Context& dev_ctx,
                             phi::errors::PreconditionNotMet(
                                 "backprop should not be null in NPU kernel of "
                                 "softmax_with_cross_entropy_grad."));
-    logits_grad->mutable_data<T>(dev_ctx.GetPlace());
-
+    dev_ctx.template Alloc<T>(logits_grad);
     const int rank = logits_grad->dims().size();
     const int use_axis = axis < 0 ? axis + rank : axis;
     const int n = SizeToAxis(use_axis, logits_grad->dims());

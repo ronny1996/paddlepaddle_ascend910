@@ -339,7 +339,7 @@ std::vector<aclDataBuffer *> &NpuOpRunner::GetOutputBuffers() {
 
 aclTensorDesc *NpuOpRunner::CreateTensorDesc(phi::DenseTensor tensor,
                                              aclMemType mem_type) {
-  auto dtype = ConvertToNpuDtype(tensor.type());
+  auto dtype = ConvertToNpuDtype(tensor.dtype());
   auto format = ConvertToNpuFormat(tensor.layout());
   auto dims = phi::vectorize(tensor.dims());
   int size = dims.size();

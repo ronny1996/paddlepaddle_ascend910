@@ -24,7 +24,7 @@ void SoftmaxKernel(const Context& dev_ctx,
     std::vector<int> axes;
     axes.push_back(axis);
     NPUAttributeMap attr_input = {{"axes", axes}};
-    out->mutable_data<T>(dev_ctx.GetPlace());
+    dev_ctx.template Alloc<T>(out);
     const auto& runner = NpuOpRunner("SoftmaxV2", {x}, {*out}, attr_input);
     auto stream = dev_ctx.stream();
     runner.Run(stream);
@@ -54,7 +54,7 @@ void SoftmaxGradKernel(const Context& dev_ctx,
     tmp_out_grad.ShareDataWith(out_grad).Resize({first_dim, sec_dim});
 
     x_grad->Resize(phi::make_ddim({first_dim, sec_dim}));
-    x_grad->mutable_data<T>(dev_ctx.GetPlace());
+    dev_ctx.template Alloc<T>(x_grad);
 
     NPUAttributeMap attr_input = {};
     const auto& runner = NpuOpRunner(std::string("SoftmaxGrad"),

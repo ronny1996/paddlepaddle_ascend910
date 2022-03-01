@@ -22,7 +22,7 @@ template <typename T>
 static void TranposeNPU(const phi::CustomContext& dev_ctx,
                         const aclrtStream& stream, std::vector<int64_t>* perm,
                         const phi::DenseTensor& in, phi::DenseTensor* out) {
-  out->mutable_data<T>(dev_ctx.GetPlace());
+  dev_ctx.template Alloc<T>(out);
   NpuOpRunner runner;
   runner.SetType("Transpose")
       .AddInput(in)
@@ -34,7 +34,7 @@ static void TranposeNPU(const phi::CustomContext& dev_ctx,
 static void CastToInt64(const phi::CustomContext& dev_ctx,
                         const aclrtStream& stream, const phi::DenseTensor& in,
                         phi::DenseTensor* out) {
-  out->mutable_data<int64_t>(dev_ctx.GetPlace());
+  dev_ctx.template Alloc<int64_t>(out);
   NpuOpRunner runner;
   runner.SetType("Cast")
       .AddInput(in)
@@ -46,7 +46,7 @@ static void CastToInt64(const phi::CustomContext& dev_ctx,
 static void CastToFP32(const phi::CustomContext& dev_ctx,
                        const aclrtStream& stream, const phi::DenseTensor& in,
                        phi::DenseTensor* out) {
-  out->mutable_data<float>(dev_ctx.GetPlace());
+  dev_ctx.template Alloc<float>(out);
   NpuOpRunner runner;
   runner.SetType("Cast")
       .AddInput(in)
@@ -81,8 +81,8 @@ void ArgsortKernel(const Context& dev_ctx,
       output_fp32.Resize(output->dims());
 
       if (axis == -1 || axis + 1 == in_dims.size()) {
-        output_fp32.mutable_data<float>(dev_ctx.GetPlace());
-        indices_tmp.mutable_data<int32_t>(dev_ctx.GetPlace());
+        dev_ctx.template Alloc<float>(&output_fp32);
+        dev_ctx.template Alloc<int32_t>(&indices_tmp);
         const auto& runner =
             NpuOpRunner("Sort", {input_fp32}, {output_fp32, indices_tmp}, attr);
         runner.Run(stream);
@@ -101,14 +101,16 @@ void ArgsortKernel(const Context& dev_ctx,
         }
         auto trans_dims = phi::make_ddim(shape);
 
-        phi::DenseTensor trans_input(input_fp32.type());
+        phi::DenseTensor trans_input(input_fp32.dtype());
         trans_input.Resize(trans_dims);
         TranposeNPU<float>(dev_ctx, stream, &perm, input_fp32, &trans_input);
 
-        phi::DenseTensor trans_output(input_fp32.type());
+        phi::DenseTensor trans_output(input_fp32.dtype());
         phi::DenseTensor trans_indices(phi::DataType::INT32);
-        trans_output.mutable_data<float>(trans_dims, dev_ctx.GetPlace());
-        trans_indices.mutable_data<int32_t>(trans_dims, dev_ctx.GetPlace());
+        trans_output.Resize(trans_dims);
+        dev_ctx.template Alloc<float>(&trans_output);
+        trans_indices.Resize(trans_dims);
+        dev_ctx.template Alloc<int32_t>(&trans_indices);
 
         const auto& runner = NpuOpRunner("Sort", {trans_input},
                                          {trans_output, trans_indices}, attr);
@@ -121,8 +123,8 @@ void ArgsortKernel(const Context& dev_ctx,
       }
     } else {
       if (axis == -1 || axis + 1 == in_dims.size()) {
-        output->mutable_data<T>(dev_ctx.GetPlace());
-        indices_tmp.mutable_data<int32_t>(dev_ctx.GetPlace());
+        dev_ctx.template Alloc<T>(output);
+        dev_ctx.template Alloc<int32_t>(&indices_tmp);
         const auto& runner =
             NpuOpRunner("Sort", {input}, {*output, indices_tmp}, attr);
         runner.Run(stream);
@@ -139,14 +141,16 @@ void ArgsortKernel(const Context& dev_ctx,
         }
         auto trans_dims = phi::make_ddim(shape);
 
-        phi::DenseTensor trans_input(input.type());
+        phi::DenseTensor trans_input(input.dtype());
         trans_input.Resize(trans_dims);
         TranposeNPU<T>(dev_ctx, stream, &perm, input, &trans_input);
 
-        phi::DenseTensor trans_output(input.type());
+        phi::DenseTensor trans_output(input.dtype());
         phi::DenseTensor trans_indices(phi::DataType::INT32);
-        trans_output.mutable_data<T>(trans_dims, dev_ctx.GetPlace());
-        trans_indices.mutable_data<int32_t>(trans_dims, dev_ctx.GetPlace());
+        trans_output.Resize(trans_dims);
+        dev_ctx.template Alloc<T>(&trans_output);
+        trans_indices.Resize(trans_dims);
+        dev_ctx.template Alloc<int32_t>(&trans_indices);
 
         const auto& runner = NpuOpRunner("Sort", {trans_input},
                                          {trans_output, trans_indices}, attr);

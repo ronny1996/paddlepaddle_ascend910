@@ -27,7 +27,7 @@ void TensorFromVector(const std::vector<T>& src,
   auto src_ptr = static_cast<const void*>(src.data());
   phi::CPUPlace src_place;
   dst->Resize({static_cast<int64_t>(src.size())});
-  auto dst_ptr = static_cast<void*>(dst->mutable_data<T>(dst_place));
+  auto dst_ptr = static_cast<void*>(dev_ctx.template Alloc<T>(dst));
   auto size = src.size() * sizeof(T);
   if (UNLIKELY(size == 0)) return;
 

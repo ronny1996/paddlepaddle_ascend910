@@ -21,7 +21,7 @@ namespace custom_kernel {
                       const phi::DenseTensor& x,
                       const phi::DenseTensor& y,
                       phi::DenseTensor* out) {
-    out->mutable_data<bool>(dev_ctx.GetPlace());
+    dev_ctx.template Alloc<bool>(out);
     const auto& runner = NpuOpRunner("Equal", {x, y}, {*out}, {});
     auto stream = dev_ctx.stream();
     runner.Run(stream);
@@ -32,7 +32,7 @@ namespace custom_kernel {
                       const phi::DenseTensor& x,
                       const phi::DenseTensor& y,
                       phi::DenseTensor* out) {
-    out->mutable_data<bool>(dev_ctx.GetPlace());
+    dev_ctx.template Alloc<bool>(out);
     const auto& runner = NpuOpRunner("Equal", {x, y}, {*out}, {});
     auto stream = dev_ctx.stream();
     runner.Run(stream);
@@ -43,7 +43,7 @@ namespace custom_kernel {
                       const phi::DenseTensor& x,
                       const phi::DenseTensor& y,
                       phi::DenseTensor* out) {
-    out->mutable_data<bool>(dev_ctx.GetPlace());
+    dev_ctx.template Alloc<bool>(out);
     const auto& runner = NpuOpRunner("Less", {x, y}, {*out}, {});
     auto stream = dev_ctx.stream();
     runner.Run(stream);
@@ -54,7 +54,7 @@ namespace custom_kernel {
                       const phi::DenseTensor& x,
                       const phi::DenseTensor& y,
                       phi::DenseTensor* out) {
-    out->mutable_data<bool>(dev_ctx.GetPlace());
+    dev_ctx.template Alloc<bool>(out);
     const auto& runner = NpuOpRunner("GreaterEqual", {x, y}, {*out}, {});
     auto stream = dev_ctx.stream();
     runner.Run(stream);
