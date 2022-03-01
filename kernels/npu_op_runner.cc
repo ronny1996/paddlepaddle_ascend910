@@ -13,10 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 
 #include "npu_op_runner.h"
-#include "npu_enforce.h"
 
 #include <map>
 #include "acl/acl_op_compiler.h"
+
+#include "npu_enforce.h"
+#include "npu_funcs.h"
 
 static std::map<paddle::experimental::DataType, aclDataType>
     DTYPE_2_ACL_DTYPE = {
@@ -60,8 +62,8 @@ NpuOpRunner::NpuOpRunner() {}
 NpuOpRunner::NpuOpRunner(const std::string &op_type) : op_type_(op_type) {}
 
 NpuOpRunner::NpuOpRunner(const std::string &op_type,
-                         const std::vector<Tensor> &inputs,
-                         const std::vector<Tensor> &outputs,
+                         const std::vector<phi::DenseTensor> &inputs,
+                         const std::vector<phi::DenseTensor> &outputs,
                          const NPUAttributeMap &attrs) : op_type_(op_type) {
   AddInputs(inputs);
   AddOutputs(outputs);
@@ -186,7 +188,7 @@ NpuOpRunner &NpuOpRunner::AddAttrs(const NPUAttributeMap &attrs) {
   return *this;
 }
 
-NpuOpRunner &NpuOpRunner::AddInput(const Tensor &tensor) {
+NpuOpRunner &NpuOpRunner::AddInput(const phi::DenseTensor &tensor) {
   // create aclTensorDesc
   input_descs_.emplace_back(CreateTensorDesc(tensor));
   // create aclDataBuffer
@@ -194,7 +196,7 @@ NpuOpRunner &NpuOpRunner::AddInput(const Tensor &tensor) {
   return *this;
 }
 
-NpuOpRunner &NpuOpRunner::AddInput(const Tensor &tensor, aclMemType mem_type) {
+NpuOpRunner &NpuOpRunner::AddInput(const phi::DenseTensor &tensor, aclMemType mem_type) {
   // create aclTensorDesc
   input_descs_.emplace_back(CreateTensorDesc(tensor, mem_type));
   // create aclDataBuffer
@@ -202,7 +204,59 @@ NpuOpRunner &NpuOpRunner::AddInput(const Tensor &tensor, aclMemType mem_type) {
   return *this;
 }
 
-NpuOpRunner &NpuOpRunner::AddOutput(const Tensor &tensor) {
+NpuOpRunner &NpuOpRunner::AddInput(std::vector<int32_t> &&dims) {
+  phi::DenseTensor host_tensor;
+  custom_kernel::TensorFromVector(dims, phi::CPUContext(), &host_tensor);
+  host_tensors_.emplace_back(host_tensor);
+
+  // create aclTensorDesc
+  input_descs_.emplace_back(CreateTensorDesc(host_tensor, ACL_MEMTYPE_HOST));
+  // create aclDataBuffer
+  input_buffers_.emplace_back(CreateDataBuffer(host_tensor));
+
+  return *this;
+}
+
+NpuOpRunner &NpuOpRunner::AddInput(std::vector<int64_t> &&dims) {
+  phi::DenseTensor host_tensor;
+  custom_kernel::TensorFromVector(dims, phi::CPUContext(), &host_tensor);
+  host_tensors_.emplace_back(host_tensor);
+
+  // create aclTensorDesc
+  input_descs_.emplace_back(CreateTensorDesc(host_tensor, ACL_MEMTYPE_HOST));
+  // create aclDataBuffer
+  input_buffers_.emplace_back(CreateDataBuffer(host_tensor));
+
+  return *this;
+}
+
+NpuOpRunner &NpuOpRunner::AddInput(std::vector<float> &&values) {
+  phi::DenseTensor host_tensor;
+  custom_kernel::TensorFromVector(values, phi::CPUContext(), &host_tensor);
+  host_tensors_.emplace_back(host_tensor);
+
+  // create aclTensorDesc
+  input_descs_.emplace_back(CreateTensorDesc(host_tensor, ACL_MEMTYPE_HOST));
+  // create aclDataBuffer
+  input_buffers_.emplace_back(CreateDataBuffer(host_tensor));
+
+  return *this;
+}
+
+NpuOpRunner &NpuOpRunner::AddInput(std::vector<double> &&values) {
+  phi::DenseTensor host_tensor;
+  custom_kernel::TensorFromVector(values, phi::CPUContext(), &host_tensor);
+  host_tensors_.emplace_back(host_tensor);
+
+  // create aclTensorDesc
+  input_descs_.emplace_back(CreateTensorDesc(host_tensor, ACL_MEMTYPE_HOST));
+  // create aclDataBuffer
+  input_buffers_.emplace_back(CreateDataBuffer(host_tensor));
+
+  return *this;
+}
+
+NpuOpRunner &NpuOpRunner::AddOutput(const phi::DenseTensor &tensor) {
   // create aclTensorDesc
   output_descs_.emplace_back(CreateTensorDesc(tensor));
   // create aclDataBuffer
@@ -210,7 +264,7 @@ NpuOpRunner &NpuOpRunner::AddOutput(const Tensor &tensor) {
   return *this;
 }
 
-NpuOpRunner &NpuOpRunner::AddInputs(const std::vector<Tensor> &tensors) {
+NpuOpRunner &NpuOpRunner::AddInputs(const std::vector<phi::DenseTensor> &tensors) {
   input_descs_.reserve(tensors.size());
   input_buffers_.reserve(tensors.size());
   for (auto tensor : tensors) {
@@ -237,7 +291,7 @@ NpuOpRunner &NpuOpRunner::AddInputNames(const std::vector<std::string> &names) {
   return *this;
 }
 
-NpuOpRunner &NpuOpRunner::AddOutputs(const std::vector<Tensor> &tensors) {
+NpuOpRunner &NpuOpRunner::AddOutputs(const std::vector<phi::DenseTensor> &tensors) {
   output_descs_.reserve(tensors.size());
   output_buffers_.reserve(tensors.size());
   for (auto tensor : tensors) {
@@ -283,7 +337,7 @@ std::vector<aclDataBuffer *> &NpuOpRunner::GetOutputBuffers() {
   return output_buffers_;
 }
 
-aclTensorDesc *NpuOpRunner::CreateTensorDesc(Tensor tensor,
+aclTensorDesc *NpuOpRunner::CreateTensorDesc(phi::DenseTensor tensor,
                                              aclMemType mem_type) {
   auto dtype = ConvertToNpuDtype(tensor.type());
   auto format = ConvertToNpuFormat(tensor.layout());
@@ -309,7 +363,7 @@ aclTensorDesc *NpuOpRunner::CreateTensorDesc(Tensor tensor,
   return desc;
 }
 
-aclDataBuffer *NpuOpRunner::CreateDataBuffer(Tensor tensor) {
+aclDataBuffer *NpuOpRunner::CreateDataBuffer(phi::DenseTensor tensor) {
   void *ptr = tensor.data();
   VLOG(4) << "NPU ptr: " << ptr << ", size: " << tensor.memory_size();
   auto *buffer = aclCreateDataBuffer(ptr, tensor.memory_size());

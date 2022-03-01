@@ -21,7 +21,6 @@ limitations under the License. */
 
 #include "acl/acl.h"
 
-using Tensor = phi::DenseTensor;
 using NPUAttribute =
     boost::variant<boost::blank, int, float, std::string, std::vector<int>,
                    std::vector<float>, std::vector<std::string>, bool,
@@ -35,8 +34,8 @@ class NpuOpRunner {
   NpuOpRunner();
   explicit NpuOpRunner(const std::string &op_type);
   NpuOpRunner(const std::string &op_type,
-              const std::vector<Tensor> &inputs = {},
-              const std::vector<Tensor> &outputs = {},
+              const std::vector<phi::DenseTensor> &inputs = {},
+              const std::vector<phi::DenseTensor> &outputs = {},
               const NPUAttributeMap &attrs = {});
 
   NpuOpRunner(const NpuOpRunner &runner) = delete;
@@ -54,9 +53,9 @@ class NpuOpRunner {
 
   NpuOpRunner &AddAttrs(const NPUAttributeMap &attrs);
 
-  NpuOpRunner &AddInput(const Tensor &tensor);
+  NpuOpRunner &AddInput(const phi::DenseTensor &tensor);
 
-  NpuOpRunner &AddInput(const Tensor &tensor, aclMemType mem_type);
+  NpuOpRunner &AddInput(const phi::DenseTensor &tensor, aclMemType mem_type);
 
   NpuOpRunner &AddInput(std::vector<int32_t> &&dims);
 
@@ -66,13 +65,13 @@ class NpuOpRunner {
 
   NpuOpRunner &AddInput(std::vector<double> &&values);
 
-  NpuOpRunner &AddOutput(const Tensor &tensor);
+  NpuOpRunner &AddOutput(const phi::DenseTensor &tensor);
 
-  NpuOpRunner &AddInputs(const std::vector<Tensor> &tensors);
+  NpuOpRunner &AddInputs(const std::vector<phi::DenseTensor> &tensors);
 
   NpuOpRunner &AddInputNames(const std::vector<std::string> &names);
 
-  NpuOpRunner &AddOutputs(const std::vector<Tensor> &tensors);
+  NpuOpRunner &AddOutputs(const std::vector<phi::DenseTensor> &tensors);
 
   aclTensorDesc *GetInputDesc(size_t index);
 
@@ -89,9 +88,9 @@ class NpuOpRunner {
   void Run(aclrtStream stream = nullptr) const;
 
  private:
-  aclTensorDesc *CreateTensorDesc(Tensor tensor,
+  aclTensorDesc *CreateTensorDesc(phi::DenseTensor tensor,
                                   aclMemType mem_type = ACL_MEMTYPE_DEVICE);
-  aclDataBuffer *CreateDataBuffer(Tensor tensor);
+  aclDataBuffer *CreateDataBuffer(phi::DenseTensor tensor);
 
  private:
   std::string op_type_;
@@ -99,6 +98,6 @@ class NpuOpRunner {
   std::vector<aclDataBuffer *> output_buffers_;
   std::vector<aclTensorDesc *> input_descs_;
   std::vector<aclTensorDesc *> output_descs_;
-  std::vector<Tensor> host_tensors_;
+  std::vector<phi::DenseTensor> host_tensors_;
   aclopAttr *attr_{nullptr};
 };

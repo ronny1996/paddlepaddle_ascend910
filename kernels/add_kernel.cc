@@ -13,23 +13,41 @@
 // limitations under the License.
 
 #include "npu_op_runner.h"
+#include "npu_elementwise_funcs.h"
 
 namespace custom_kernel {
 
+// AddRawKernel
 template <typename T, typename Context>
-void elementwise_add_kernel(const Context& dev_ctx,
-                            const phi::DenseTensor& x,
-                            const phi::DenseTensor& y,
-                            phi::DenseTensor* out) {
+void AddRawKernel(const Context& dev_ctx,
+                  const phi::DenseTensor& x,
+                  const phi::DenseTensor& y,
+                  int axis,
+                  phi::DenseTensor* out) {
     aclrtStream stream = static_cast<aclrtStream>(dev_ctx.stream());
     dev_ctx.template Alloc<T>(out);
     const auto& runner = NpuOpRunner("Add", {x, y}, {*out}, {});
     runner.Run(stream);
 }
 
+// AddKernel
+template <typename T, typename Context>
+void AddKernel(const Context& dev_ctx,
+               const phi::DenseTensor& x,
+               const phi::DenseTensor& y,
+               phi::DenseTensor* out) {
+  int axis = -1;
+  AddRawKernel<T>(dev_ctx, x, y, axis, out);
+}
+
 } // namespace custom_kernel
+
+PD_REGISTER_PLUGIN_KERNEL(add_raw,
+                          Ascend910,
+                          ALL_LAYOUT,
+                          custom_kernel::AddRawKernel, int8_t) {}
 
 PD_REGISTER_PLUGIN_KERNEL(add,
                           Ascend910,
                           ALL_LAYOUT,
-                          custom_kernel::elementwise_add_kernel, int8_t) {}
+                          custom_kernel::AddKernel, int8_t) {}
