@@ -36,7 +36,37 @@ struct NPUStatusType {};
 
 DEFINE_NPU_STATUS_TYPE(aclError, ACL_ERROR_NONE);
 DEFINE_NPU_STATUS_TYPE(HcclResult, HCCL_SUCCESS);
+
+#define DEFINE_SAFE_BOOST_GET(__InputType, __OutputType, __OutputTypePtr,      \
+                              __FuncName)                                      \
+  template <typename OutputType, typename InputType>                           \
+  auto __FuncName(__InputType input, const char* expression, const char* file, \
+                  int line)                                                    \
+      ->typename std::conditional<std::is_pointer<InputType>::value,           \
+                                  __OutputTypePtr, __OutputType>::type {       \
+    try {                                                                      \
+      return boost::get<OutputType>(input);                                    \
+    } catch (boost::bad_get&) {                                                \
+      HANDLE_THE_ERROR                                                         \
+      throw ::phi::enforce::EnforceNotMet(                                     \
+          phi::errors::InvalidArgument(                                        \
+              "boost::get failed, cannot get value "                           \
+              "(%s) by type %s, its type is %s.",                              \
+              expression, phi::enforce::demangle(typeid(OutputType).name()),   \
+              phi::enforce::demangle(input.type().name())),                    \
+          file, line);                                                         \
+      END_HANDLE_THE_ERROR                                                     \
+    }                                                                          \
+  }
+
+DEFINE_SAFE_BOOST_GET(const InputType&, const OutputType&, const OutputType*,
+                      SafeBoostGetConst);
+
 }  // namespace details
+
+#define BOOST_GET_CONST(__TYPE, __VALUE)                                  \
+  custom_kernel::details::SafeBoostGetConst<__TYPE>(__VALUE, #__VALUE, \
+                                                       __FILE__, __LINE__)
 
 inline std::string build_npu_error_msg(aclError stat) {
   std::ostringstream sout;

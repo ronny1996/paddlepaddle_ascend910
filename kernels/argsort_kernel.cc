@@ -22,7 +22,7 @@ template <typename T>
 static void TranposeNPU(const phi::CustomContext& dev_ctx,
                         const aclrtStream& stream, std::vector<int64_t>* perm,
                         const phi::DenseTensor& in, phi::DenseTensor* out) {
-  dev_ctx.template Alloc<T>(out);
+  dev_ctx.Alloc<T>(out);
   NpuOpRunner runner;
   runner.SetType("Transpose")
       .AddInput(in)
@@ -34,7 +34,7 @@ static void TranposeNPU(const phi::CustomContext& dev_ctx,
 static void CastToInt64(const phi::CustomContext& dev_ctx,
                         const aclrtStream& stream, const phi::DenseTensor& in,
                         phi::DenseTensor* out) {
-  dev_ctx.template Alloc<int64_t>(out);
+  dev_ctx.Alloc<int64_t>(out);
   NpuOpRunner runner;
   runner.SetType("Cast")
       .AddInput(in)
@@ -46,7 +46,7 @@ static void CastToInt64(const phi::CustomContext& dev_ctx,
 static void CastToFP32(const phi::CustomContext& dev_ctx,
                        const aclrtStream& stream, const phi::DenseTensor& in,
                        phi::DenseTensor* out) {
-  dev_ctx.template Alloc<float>(out);
+  dev_ctx.Alloc<float>(out);
   NpuOpRunner runner;
   runner.SetType("Cast")
       .AddInput(in)
@@ -66,9 +66,9 @@ void ArgsortKernel(const Context& dev_ctx,
     axis = (axis < 0) ? (in_dims.size() + axis) : axis;
 
     auto stream = dev_ctx.stream();
-    NPUAttributeMap attr = {{"axis", -1},
-                                       {"descending", descending}};
 
+    // 目前这种使用方式会在计算完成退出时挂掉.
+    //NPUAttributeMap attr = {{"axis", -1}, {"descending", descending}};
     phi::DenseTensor indices_tmp(phi::DataType::INT32);
     indices_tmp.Resize(indices->dims());
 
@@ -83,10 +83,17 @@ void ArgsortKernel(const Context& dev_ctx,
       if (axis == -1 || axis + 1 == in_dims.size()) {
         dev_ctx.template Alloc<float>(&output_fp32);
         dev_ctx.template Alloc<int32_t>(&indices_tmp);
-        const auto& runner =
-            NpuOpRunner("Sort", {input_fp32}, {output_fp32, indices_tmp}, attr);
-        runner.Run(stream);
-
+        //const auto& runner =
+        //    NpuOpRunner("Sort", {input_fp32}, {output_fp32, indices_tmp}, attr);
+        //runner.Run(stream);
+        NpuOpRunner runner;
+        runner.SetType("Sort")
+            .AddInput(input_fp32)
+            .AddOutput(output_fp32)
+            .AddOutput(indices_tmp)
+            .AddAttr("axis", -1)
+            .AddAttr("descending", descending)
+            .Run(stream);
         CastToInt64(dev_ctx, stream, output_fp32, output);
       } else {
         std::vector<int64_t> perm;
@@ -112,9 +119,17 @@ void ArgsortKernel(const Context& dev_ctx,
         trans_indices.Resize(trans_dims);
         dev_ctx.template Alloc<int32_t>(&trans_indices);
 
-        const auto& runner = NpuOpRunner("Sort", {trans_input},
-                                         {trans_output, trans_indices}, attr);
-        runner.Run(stream);
+        //const auto& runner = NpuOpRunner("Sort", {trans_input},
+        //                                 {trans_output, trans_indices}, attr);
+        //runner.Run(stream);
+        NpuOpRunner runner;
+        runner.SetType("Sort")
+            .AddInput(trans_input)
+            .AddOutput(trans_output)
+            .AddOutput(trans_indices)
+            .AddAttr("axis", -1)
+            .AddAttr("descending", descending)
+            .Run(stream);
 
         TranposeNPU<float>(dev_ctx, stream, &perm, trans_output, &output_fp32);
         TranposeNPU<int32_t>(dev_ctx, stream, &perm, trans_indices, &indices_tmp);
@@ -125,9 +140,18 @@ void ArgsortKernel(const Context& dev_ctx,
       if (axis == -1 || axis + 1 == in_dims.size()) {
         dev_ctx.template Alloc<T>(output);
         dev_ctx.template Alloc<int32_t>(&indices_tmp);
-        const auto& runner =
-            NpuOpRunner("Sort", {input}, {*output, indices_tmp}, attr);
-        runner.Run(stream);
+        //const auto& runner =
+        //    NpuOpRunner("Sort", {input}, {*output, indices_tmp}, attr);
+        //runner.Run(stream);
+        
+        NpuOpRunner runner;
+        runner.SetType("Sort")
+            .AddInput(input)
+            .AddOutput(*output)
+            .AddOutput(indices_tmp)
+            .AddAttr("axis", -1)
+            .AddAttr("descending", descending)
+            .Run(stream);
       } else {
         std::vector<int64_t> perm;
         for (int64_t i = 0; i < in_dims.size(); i++) {
@@ -151,10 +175,19 @@ void ArgsortKernel(const Context& dev_ctx,
         dev_ctx.template Alloc<T>(&trans_output);
         trans_indices.Resize(trans_dims);
         dev_ctx.template Alloc<int32_t>(&trans_indices);
+      
+        //const auto& runner = NpuOpRunner("Sort", {trans_input},
+        //                                 {trans_output, trans_indices}, attr);
+        //runner.Run(stream);
 
-        const auto& runner = NpuOpRunner("Sort", {trans_input},
-                                         {trans_output, trans_indices}, attr);
-        runner.Run(stream);
+        NpuOpRunner runner;
+        runner.SetType("Sort")
+            .AddInput(trans_input)
+            .AddOutput(trans_output)
+            .AddOutput(trans_indices)
+            .AddAttr("axis", -1)
+            .AddAttr("descending", descending)
+            .Run(stream);
 
         TranposeNPU<T>(dev_ctx, stream, &perm, trans_output, output);
         TranposeNPU<int32_t>(dev_ctx, stream, &perm, trans_indices, &indices_tmp);
@@ -167,8 +200,8 @@ void ArgsortKernel(const Context& dev_ctx,
 }  // namespace custom_kernel
 
 
-// PD_REGISTER_PLUGIN_KERNEL(argsort,
-//                           Ascend910,
-//                           ALL_LAYOUT,
-//                           custom_kernel::ArgsortKernel, float, int64_t, phi::dtype::float16) {}
+//PD_REGISTER_PLUGIN_KERNEL(argsort,
+//                          Ascend910,
+//                          ALL_LAYOUT,
+//                          custom_kernel::ArgsortKernel, float, int64_t, phi::dtype::float16) {}
 

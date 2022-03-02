@@ -102,18 +102,18 @@ NpuOpRunner &NpuOpRunner::AddAttr(const std::string &name,
   }
   if (attr.type() == typeid(bool)) {
     PADDLE_ENFORCE_NPU_SUCCESS(
-        aclopSetAttrBool(attr_, name.c_str(), boost::get<bool>(attr)));
+        aclopSetAttrBool(attr_, name.c_str(), BOOST_GET_CONST(bool, attr)));
   } else if (attr.type() == typeid(int)) {
     PADDLE_ENFORCE_NPU_SUCCESS(
-        aclopSetAttrInt(attr_, name.c_str(), boost::get<int>(attr)));
+        aclopSetAttrInt(attr_, name.c_str(), BOOST_GET_CONST(int, attr)));
   } else if (attr.type() == typeid(int64_t)) {
     PADDLE_ENFORCE_NPU_SUCCESS(
-        aclopSetAttrInt(attr_, name.c_str(), boost::get<int64_t>(attr)));
+        aclopSetAttrInt(attr_, name.c_str(), BOOST_GET_CONST(int64_t, attr)));
   } else if (attr.type() == typeid(float)) {
     PADDLE_ENFORCE_NPU_SUCCESS(
-        aclopSetAttrFloat(attr_, name.c_str(), boost::get<float>(attr)));
+        aclopSetAttrFloat(attr_, name.c_str(), BOOST_GET_CONST(float, attr)));
   } else if (attr.type() == typeid(std::vector<bool>)) {
-    auto a = boost::get<std::vector<bool>>(attr);
+    auto a = BOOST_GET_CONST(std::vector<bool>, attr);
     std::vector<uint8_t> cast_a;
     for (auto it : a) {
       cast_a.push_back(static_cast<uint8_t>(it));
@@ -121,7 +121,7 @@ NpuOpRunner &NpuOpRunner::AddAttr(const std::string &name,
     PADDLE_ENFORCE_NPU_SUCCESS(aclopSetAttrListBool(
         attr_, name.c_str(), cast_a.size(), cast_a.data()));
   } else if (attr.type() == typeid(std::vector<int>)) {
-    auto a = boost::get<std::vector<int>>(attr);
+    auto a = BOOST_GET_CONST(std::vector<int>, attr);
     std::vector<int64_t> cast_a;
     for (auto it : a) {
       cast_a.push_back(static_cast<int64_t>(it));
@@ -129,19 +129,19 @@ NpuOpRunner &NpuOpRunner::AddAttr(const std::string &name,
     PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrListInt(attr_, name.c_str(), cast_a.size(), cast_a.data()));
   } else if (attr.type() == typeid(std::vector<int64_t>)) {
-    auto a = boost::get<std::vector<int64_t>>(attr);
+    auto a = BOOST_GET_CONST(std::vector<int64_t>, attr);
     PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrListInt(attr_, name.c_str(), a.size(), a.data()));
   } else if (attr.type() == typeid(std::vector<float>)) {
-    auto a = boost::get<std::vector<float>>(attr);
+    auto a = BOOST_GET_CONST(std::vector<float>, attr);
     PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrListFloat(attr_, name.c_str(), a.size(), a.data()));
   } else if (attr.type() == typeid(std::string)) {
-    auto a = boost::get<std::string>(attr);
+    auto a = BOOST_GET_CONST(std::string, attr);
     PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrString(attr_, name.c_str(), a.c_str()));
   } else if (attr.type() == typeid(std::vector<std::string>)) {
-    auto a = boost::get<std::vector<std::string>>(attr);
+    auto a = BOOST_GET_CONST(std::vector<std::string>, attr);
     std::vector<const char *> s;
     for (auto &it : a) {
       s.push_back(it.data());
@@ -149,7 +149,7 @@ NpuOpRunner &NpuOpRunner::AddAttr(const std::string &name,
     PADDLE_ENFORCE_NPU_SUCCESS(
         aclopSetAttrListString(attr_, name.c_str(), s.size(), s.data()));
   } else if (attr.type() == typeid(std::vector<std::vector<int64_t>>)) {
-    auto a = boost::get<std::vector<std::vector<int64_t>>>(attr);
+    auto a = BOOST_GET_CONST(std::vector<std::vector<int64_t>>, attr);
     std::vector<int64_t *> data;
     std::vector<int> num;
     for (auto &&v : a) {
@@ -159,7 +159,7 @@ NpuOpRunner &NpuOpRunner::AddAttr(const std::string &name,
     PADDLE_ENFORCE_NPU_SUCCESS(aclopSetAttrListListInt(
         attr_, name.c_str(), data.size(), num.data(), data.data()));
   } else {
-    PADDLE_THROW(phi::errors::Unimplemented(
+    PADDLE_THROW(platform::errors::Unimplemented(
         "Can not convert attribubte '%s' to convert to aclopAttr", name));
   }
   return *this;
@@ -349,7 +349,7 @@ aclTensorDesc *NpuOpRunner::CreateTensorDesc(phi::DenseTensor tensor,
   }
 
   VLOG(4) << "NPU dtype:" << dtype << " "
-          << "rank:" << dims.size() << " dims: TBD" /* << tensor.dims()*/
+          << "rank:" << dims.size() << " dims: " << tensor.dims()
           << " format:" << format;
 
   auto *desc = aclCreateTensorDesc(dtype, size, dims.data(), format);
@@ -389,5 +389,6 @@ void NpuOpRunner::Run(aclrtStream stream) const {
       output_buffers_.data(), attr_, ACL_ENGINE_SYS, ACL_COMPILE_SYS, NULL,
       stream);
   VLOG(4) << "after aclopCompileAndExecute: " << ret;
+  //ret = aclrtSynchronizeStream(stream);
   PADDLE_ENFORCE_NPU_SUCCESS(ret);
 }
