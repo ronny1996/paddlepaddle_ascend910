@@ -1,0 +1,162 @@
+diff --git a/paddle/phi/kernels/cpu/ascend_kernel.cc b/paddle/phi/kernels/cpu/ascend_kernel.cc
+new file mode 100644
+index 0000000000..36cb17719b
+--- /dev/null
++++ b/paddle/phi/kernels/cpu/ascend_kernel.cc
+@@ -0,0 +1,92 @@
++#include "paddle/phi/kernels/ascend_kernel.h"
++
++namespace phi {
++
++template <typename T, typename Context>
++void MinRawKernel(const Context& dev_ctx, const phi::DenseTensor& x,
++                  const std::vector<int64_t>& axes, bool keep_dim,
++                  bool reduce_all, phi::DenseTensorMeta::DataType out_dtype,
++                  phi::DenseTensor* out) {
++  out = out;
++}
++
++template <typename T, typename Context>
++void MinKernel(const Context& dev_ctx, const phi::DenseTensor& x,
++               const std::vector<int64_t>& dims,
++               phi::DenseTensorMeta::DataType out_dtype, bool keep_dim,
++               phi::DenseTensor* out) {
++  out = out;
++}
++
++template <typename T, typename Context>
++void MaxRawKernel(const Context& dev_ctx, const phi::DenseTensor& x,
++                  const std::vector<int64_t>& axes, bool keep_dim,
++                  bool reduce_all, phi::DenseTensorMeta::DataType out_dtype,
++                  phi::DenseTensor* out) {
++  out = out;
++}
++
++template <typename T, typename Context>
++void MaxKernel(const Context& dev_ctx, const phi::DenseTensor& x,
++               const std::vector<int64_t>& dims,
++               phi::DenseTensorMeta::DataType out_dtype, bool keep_dim,
++               phi::DenseTensor* out) {
++  out = out;
++}
++
++template <typename T, typename Context>
++void MeanGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
++                      const std::vector<int64_t>& dim, bool keep_dim,
++                      phi::DenseTensor* out) {
++  out = out;
++}
++
++template <typename T, typename Context>
++void MeanRawGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
++                          const phi::DenseTensor& out_grad,
++                          const std::vector<int64_t>& dim, bool keep_dim,
++                          bool reduce_all, phi::DenseTensor* x_grad) {
++}
++
++template <typename T, typename Context>
++void SliceKernel(const Context& dev_ctx,
++                  const phi::DenseTensor& x,
++                  const phi::ScalarArray& axes_array,
++                  const phi::ScalarArray& starts_array,
++                  const phi::ScalarArray& ends_array,
++                  phi::DenseTensor* out) {
++
++}
++
++template <typename T, typename Context>
++void SGDKernel(const Context& dev_ctx,
++                            const phi::DenseTensor& param_var,
++                            const phi::DenseTensor& learning_rate,
++                            const phi::DenseTensor& grad_var,
++                            phi::DenseTensor* param_out) {}
++    
++} // namespace phi
++
++PD_REGISTER_KERNEL(
++    max_raw, CPU, ALL_LAYOUT, phi::MaxRawKernel, float, double, bool) {}
++
++PD_REGISTER_KERNEL(
++    min_raw, CPU, ALL_LAYOUT, phi::MinRawKernel, float, double, bool) {}
++
++PD_REGISTER_KERNEL(
++    max, CPU, ALL_LAYOUT, phi::MaxKernel, float, double, bool) {}
++
++PD_REGISTER_KERNEL(
++    min, CPU, ALL_LAYOUT, phi::MinKernel, float, double, bool) {}
++
++PD_REGISTER_KERNEL(
++    mean_raw_grad, CPU, ALL_LAYOUT, phi::MeanRawGradKernel, float, double, bool) {}
++
++PD_REGISTER_KERNEL(
++    mean_grad, CPU, ALL_LAYOUT, phi::MeanGradKernel, float, double, bool) {}
++
++PD_REGISTER_KERNEL(
++    slice, CPU, ALL_LAYOUT, phi::SliceKernel, float, double, bool) {}
++
++PD_REGISTER_KERNEL(
++    sgd, CPU, ALL_LAYOUT, phi::SGDKernel, float, double, bool) {}
+diff --git a/paddle/phi/ops/compat/ascend_sig.cc b/paddle/phi/ops/compat/ascend_sig.cc
+new file mode 100644
+index 0000000000..54ad0aa805
+--- /dev/null
++++ b/paddle/phi/ops/compat/ascend_sig.cc
+@@ -0,0 +1,58 @@
++#include "paddle/phi/core/compat/op_utils.h"
++
++namespace phi {
++
++KernelSignature ReduceMaxOpArgumentMapping(const ArgumentMappingContext& ctx) {
++  bool reduce_all = paddle::any_cast<bool>(ctx.Attr("reduce_all"));
++  if (ctx.IsDenseTensorInput("X")) {
++    if (!reduce_all) {
++      return KernelSignature("max", {"X"}, {"dim", "out_dtype", "keep_dim"}, {"Out"});
++    }
++    return KernelSignature(
++        "max_raw", {"X"}, {"dim", "keep_dim", "reduce_all", "out_dtype"}, {"Out"});
++  }
++  return KernelSignature("unregistered", {}, {}, {});
++}
++
++KernelSignature ReduceMinOpArgumentMapping(const ArgumentMappingContext& ctx) {
++  bool reduce_all = paddle::any_cast<bool>(ctx.Attr("reduce_all"));
++  if (ctx.IsDenseTensorInput("X")) {
++    if (!reduce_all) {
++      return KernelSignature("min", {"X"}, {"dim", "out_dtype", "keep_dim"}, {"Out"});
++    }
++    return KernelSignature(
++        "min_raw", {"X"}, {"dim", "keep_dim", "reduce_all", "out_dtype"}, {"Out"});
++  }
++  return KernelSignature("unregistered", {}, {}, {});
++}
++
++KernelSignature ReduceMeanGradOpArgumentMapping(const ArgumentMappingContext& ctx) {
++  bool reduce_all = paddle::any_cast<bool>(ctx.Attr("reduce_all"));
++  if (ctx.IsDenseTensorInput("X")) {
++    if (!reduce_all) {
++      return KernelSignature("mean_grad", {"X", GradVarName("Out")}, {"dim", "keep_dim"}, {GradVarName("X")});
++    }
++    return KernelSignature("mean_raw_grad", {"X", GradVarName("Out")}, {"dim", "keep_dim", "reduce_all"}, {GradVarName("X")});
++  }
++  return KernelSignature("unregistered", {}, {}, {});
++}
++
++KernelSignature SliceOpArgumentMapping(const ArgumentMappingContext& ctx) {
++  return KernelSignature("slice", {"Input"}, {"axes", "starts", "ends"}, {"Out"});
++}
++
++KernelSignature SGDOpArgumentMapping(const ArgumentMappingContext& ctx) {
++  return KernelSignature("sgd", {"Param", "LearningRate", "Grad"}, {}, {"ParamOut"});
++}
++
++}  // namespace phi
++
++PD_REGISTER_BASE_KERNEL_NAME(reduce_max, max);
++PD_REGISTER_BASE_KERNEL_NAME(reduce_min, min);
++PD_REGISTER_BASE_KERNEL_NAME(reduce_mean_grad, mean_grad);
++
++PD_REGISTER_ARG_MAPPING_FN(reduce_max, phi::ReduceMaxOpArgumentMapping);
++PD_REGISTER_ARG_MAPPING_FN(reduce_min, phi::ReduceMinOpArgumentMapping);
++PD_REGISTER_ARG_MAPPING_FN(reduce_mean_grad, phi::ReduceMeanGradOpArgumentMapping);
++PD_REGISTER_ARG_MAPPING_FN(slice, phi::SliceOpArgumentMapping);
++PD_REGISTER_ARG_MAPPING_FN(sgd, phi::SGDOpArgumentMapping);
