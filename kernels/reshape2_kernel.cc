@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "npu_op_runner.h"
 #include "npu_funcs.h"
+#include "npu_op_runner.h"
 
 #include "paddle/phi/common/scalar_array.h"
 #include "paddle/phi/core/meta_tensor.h"
@@ -138,8 +138,8 @@ void InferMetaFromVecValue(const phi::MetaTensor& x,
 
 template <typename T, typename Context>
 void ReshapeWithXShapeKernel(const Context& dev_ctx, const phi::DenseTensor& x,
-                     const phi::ScalarArray& shape, phi::DenseTensor* xshape,
-                     phi::DenseTensor* out) {
+                             const phi::ScalarArray& shape,
+                             phi::DenseTensor* xshape, phi::DenseTensor* out) {
   phi::MetaTensor meta_out(out);
   InferMetaFromVecValue(x, shape.GetData(), &meta_out);
   if (x.initialized() && x.Holder() == out->Holder()) {
@@ -154,9 +154,22 @@ void ReshapeWithXShapeKernel(const Context& dev_ctx, const phi::DenseTensor& x,
   // out->ResetLoD(x.lod());
 }
 
+template <typename T, typename Context>
+void ReshapeGradKernel(const Context& dev_ctx, const phi::DenseTensor& out_grad,
+                       phi::DenseTensor* x_grad) {
+  dev_ctx.Alloc(x_grad, out_grad.dtype());
+  auto x_dims = x_grad->dims();
+  TensorCopy(dev_ctx, out_grad, false, x_grad);
+  x_grad->Resize(x_dims);
+}
+
 }  // namespace custom_kernel
 
 PD_REGISTER_PLUGIN_KERNEL(reshape_with_xshape, Ascend910, ALL_LAYOUT,
-                          custom_kernel::ReshapeWithXShapeKernel, phi::dtype::float16,
+                          custom_kernel::ReshapeWithXShapeKernel,
+                          phi::dtype::float16, float, double, uint8_t, int16_t,
+                          int32_t, int64_t, bool) {}
+PD_REGISTER_PLUGIN_KERNEL(reshape_grad, Ascend910, ALL_LAYOUT,
+                          custom_kernel::ReshapeGradKernel, phi::dtype::float16,
                           float, double, uint8_t, int16_t, int32_t, int64_t,
                           bool) {}
