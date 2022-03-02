@@ -66,46 +66,46 @@ namespace custom_kernel {
 
 } // namespace custom_kernel
 
-//PD_REGISTER_PLUGIN_KERNEL(equal,
-//                   Ascend910,
-//                   ALL_LAYOUT,
-//                   custom_kernel::EqualKernel,
-//                   bool,
-//                   int16_t,
-//                   int,
-//                   int64_t,
-//                   float,
-//                   double) {}
-//
-//PD_REGISTER_PLUGIN_KERNEL(not_equal,
-//                   Ascend910,
-//                   ALL_LAYOUT,
-//                   custom_kernel::NotEqualKernel,
-//                   bool,
-//                   int16_t,
-//                   int,
-//                   int64_t,
-//                   float,
-//                   double) {}
-//
-//PD_REGISTER_PLUGIN_KERNEL(less_than,
-//                   Ascend910,
-//                   ALL_LAYOUT,
-//                   custom_kernel::LessThanKernel,
-//                   bool,
-//                   int16_t,
-//                   int,
-//                   int64_t,
-//                   float,
-//                   double) {}
-//
-//PD_REGISTER_PLUGIN_KERNEL(greater_equal,
-//                   Ascend910,
-//                   ALL_LAYOUT,
-//                   custom_kernel::GreaterEqualKernel,
-//                   bool,
-//                   int16_t,
-//                   int,
-//                   int64_t,
-//                   float,
-//                   double) {}
+PD_REGISTER_PLUGIN_KERNEL(equal,
+                  Ascend910,
+                  ALL_LAYOUT,
+                  custom_kernel::EqualKernel,
+                  bool,
+                  int16_t,
+                  int,
+                  int64_t,
+                  float,
+                  double) {}
+
+PD_REGISTER_PLUGIN_KERNEL(not_equal,
+                  Ascend910,
+                  ALL_LAYOUT,
+                  custom_kernel::NotEqualKernel,
+                  bool,
+                  int16_t,
+                  int,
+                  int64_t,
+                  float,
+                  double) {}
+
+PD_REGISTER_PLUGIN_KERNEL(less_than,
+                  Ascend910,
+                  ALL_LAYOUT,
+                  custom_kernel::LessThanKernel,
+                  bool,
+                  int16_t,
+                  int,
+                  int64_t,
+                  float,
+                  double) {}
+
+PD_REGISTER_PLUGIN_KERNEL(greater_equal,
+                  Ascend910,
+                  ALL_LAYOUT,
+                  custom_kernel::GreaterEqualKernel,
+                  bool,
+                  int16_t,
+                  int,
+                  int64_t,
+                  float,
+                  double) {}

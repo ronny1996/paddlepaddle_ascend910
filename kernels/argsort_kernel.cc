@@ -199,9 +199,8 @@ void ArgsortKernel(const Context& dev_ctx,
 
 }  // namespace custom_kernel
 
-
-//PD_REGISTER_PLUGIN_KERNEL(argsort,
-//                          Ascend910,
-//                          ALL_LAYOUT,
-//                          custom_kernel::ArgsortKernel, float, int64_t, phi::dtype::float16) {}
+PD_REGISTER_PLUGIN_KERNEL(argsort,
+                         Ascend910,
+                         ALL_LAYOUT,
+                         custom_kernel::ArgsortKernel, float, int64_t, phi::dtype::float16) {}
 

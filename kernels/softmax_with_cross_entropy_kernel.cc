@@ -37,6 +37,9 @@ void SoftmaxWithCrossEntropyKernel(const Context& dev_ctx,
                    const phi::DenseTensor& logits,
                    const phi::DenseTensor& labels,
                    bool soft_label,
+                   bool use_softmax,
+                   bool numeric_stable_mode,
+                   int ignore_index,
                    int axis,
                    phi::DenseTensor* softmax,
                    phi::DenseTensor* loss,
@@ -89,9 +92,14 @@ void SoftmaxWithCrossEntropyKernel(const Context& dev_ctx,
 
 template <typename T, typename Context>
 void SoftmaxWithCrossEntropyGradKernel(const Context& dev_ctx,
+                   const phi::DenseTensor& labels,
+                   const phi::DenseTensor& softmax,
                    const phi::DenseTensor& backprop,
                    const phi::DenseTensor& loss_grad,
                    bool soft_label,
+                   bool use_softmax,
+                   bool numeric_stable_mode,
+                   int ignore_index,
                    int axis,
                    phi::DenseTensor* logits_grad) {
     PADDLE_ENFORCE_NE(phi::product(backprop.dims()), 0,
@@ -118,9 +126,9 @@ void SoftmaxWithCrossEntropyGradKernel(const Context& dev_ctx,
 
 }  // namespace custom_kernel 
 
-// PD_REGISTER_PLUGIN_KERNEL(
-//     softmax_with_cross_entropy, Ascend910, ALL_LAYOUT, custom_kernel::SoftmaxWithCrossEntropyKernel, float, phi::dtype::float16) {}
+PD_REGISTER_PLUGIN_KERNEL(
+    softmax_with_cross_entropy, Ascend910, ALL_LAYOUT, custom_kernel::SoftmaxWithCrossEntropyKernel, float, phi::dtype::float16) {}
 
-// PD_REGISTER_PLUGIN_KERNEL(
-//     softmax_with_cross_entropy_grad, Ascend910, ALL_LAYOUT, custom_kernel::SoftmaxWithCrossEntropyGradKernel, float, phi::dtype::float16) {}
+PD_REGISTER_PLUGIN_KERNEL(
+    softmax_with_cross_entropy_grad, Ascend910, ALL_LAYOUT, custom_kernel::SoftmaxWithCrossEntropyGradKernel, float, phi::dtype::float16) {}
 

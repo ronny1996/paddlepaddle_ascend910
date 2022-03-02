@@ -159,7 +159,7 @@ NpuOpRunner &NpuOpRunner::AddAttr(const std::string &name,
     PADDLE_ENFORCE_NPU_SUCCESS(aclopSetAttrListListInt(
         attr_, name.c_str(), data.size(), num.data(), data.data()));
   } else {
-    PADDLE_THROW(platform::errors::Unimplemented(
+    PADDLE_THROW(phi::errors::Unimplemented(
         "Can not convert attribubte '%s' to convert to aclopAttr", name));
   }
   return *this;
