@@ -1,4 +1,5 @@
 #include "paddle/phi/kernels/ascend_kernel.h"
+#include "paddle/phi/common/scalar_array.h"
 
 namespace phi {
 
