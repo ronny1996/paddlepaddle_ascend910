@@ -13,13 +13,14 @@
 // limitations under the License.
 
 #include "npu_op_runner.h"
+#include "npu_funcs.h"
 
 namespace custom_kernel {
 
 template <typename T, typename Context>
 void SGDKernel(const Context& dev_ctx,
-                            const phi::DenseTensor& learning_rate,
                             const phi::DenseTensor& param_var,
+                            const phi::DenseTensor& learning_rate,
                             const phi::DenseTensor& grad_var,
                             phi::DenseTensor* param_out) {
     aclrtStream stream = static_cast<aclrtStream>(dev_ctx.stream());
@@ -39,7 +40,7 @@ void SGDKernel(const Context& dev_ctx,
 
 } // namespace custom_kernel
 
-// PD_REGISTER_PLUGIN_KERNEL(sgd,
-//                           Ascend910,
-//                           ALL_LAYOUT,
-//                           custom_kernel::SGDKernel, phi::dtype::float16, float, double) {}
+PD_REGISTER_PLUGIN_KERNEL(sgd,
+                          Ascend910,
+                          ALL_LAYOUT,
+                          custom_kernel::SGDKernel, phi::dtype::float16, float, double) {}

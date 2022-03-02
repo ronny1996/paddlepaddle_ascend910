@@ -101,14 +101,14 @@ void MinKernel(const Context& dev_ctx, const phi::DenseTensor& x,
 
 }  // namespace custom_kernel
 
-// PD_REGISTER_PLUGIN_KERNEL(min_raw,
-//                           Ascend910,
-//                           ALL_LAYOUT,
-//                           custom_kernel::MinRawKernel, int32_t, int64_t,
-//                           phi::dtype::float16, float) {}
+PD_REGISTER_PLUGIN_KERNEL(min_raw,
+                          Ascend910,
+                          ALL_LAYOUT,
+                          custom_kernel::MinRawKernel, int32_t, int64_t,
+                          phi::dtype::float16, float) {}
 
-// PD_REGISTER_PLUGIN_KERNEL(min,
-//                           Ascend910,
-//                           ALL_LAYOUT,
-//                           custom_kernel::MinKernel, int32_t, int64_t,
-//                           phi::dtype::float16, float) {}
+PD_REGISTER_PLUGIN_KERNEL(min,
+                          Ascend910,
+                          ALL_LAYOUT,
+                          custom_kernel::MinKernel, int32_t, int64_t,
+                          phi::dtype::float16, float) {}
