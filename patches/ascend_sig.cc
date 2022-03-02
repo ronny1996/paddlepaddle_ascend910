@@ -55,6 +55,37 @@ KernelSignature SGDOpArgumentMapping(const ArgumentMappingContext& ctx) {
                          {"ParamOut"});
 }
 
+KernelSignature LessThanArgumentMapping(const ArgumentMappingContext& ctx) {
+  return KernelSignature("less_than", {"X", "Y"}, {"axis"}, {"Out"});
+}
+
+KernelSignature GreaterEqualArgumentMapping(const ArgumentMappingContext& ctx) {
+  return KernelSignature("greater_equal", {"X", "Y"}, {"axis"}, {"Out"});
+}
+
+KernelSignature EqualArgumentMapping(const ArgumentMappingContext& ctx) {
+  return KernelSignature("equal", {"X", "Y"}, {"axis"}, {"Out"});
+}
+
+KernelSignature NotEqualArgumentMapping(const ArgumentMappingContext& ctx) {
+  return KernelSignature("not_equal", {"X", "Y"}, {"axis"}, {"Out"});
+}
+
+KernelSignature SoftmaxWithCrossEntropyOpArgumentMapping(const ArgumentMappingContext& ctx) {
+  return KernelSignature("softmax_with_cross_entropy",
+        {"Logits", "Label"},
+        {"soft_label", "use_softmax", "numeric_stable_mode", "ignore_index", "axis"},
+        {"Softmax", "Loss", "Backprop"});
+}
+
+KernelSignature SoftmaxWithCrossEntropyGradOpArgumentMapping(
+    const ArgumentMappingContext& ctx) {
+  return KernelSignature("softmax_with_cross_entropy_grad",
+                         {"Label", "Softmax", "Backprop", GradVarName("Loss")},
+                         {"soft_label", "use_softmax", "numeric_stable_mode", "ignore_index", "axis"},
+                         {GradVarName("Logits")});
+}
+
 }  // namespace phi
 
 PD_REGISTER_BASE_KERNEL_NAME(reduce_max, max);
@@ -67,3 +98,12 @@ PD_REGISTER_ARG_MAPPING_FN(reduce_mean_grad,
                            phi::ReduceMeanGradOpArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(slice, phi::SliceOpArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(sgd, phi::SGDOpArgumentMapping);
+
+PD_REGISTER_ARG_MAPPING_FN(less_than, phi::LessThanArgumentMapping);
+PD_REGISTER_ARG_MAPPING_FN(greater_equal, phi::GreaterEqualArgumentMapping);
+PD_REGISTER_ARG_MAPPING_FN(equal, phi::EqualArgumentMapping);
+PD_REGISTER_ARG_MAPPING_FN(not_equal, phi::NotEqualArgumentMapping);
+
+PD_REGISTER_ARG_MAPPING_FN(softmax_with_cross_entropy, phi::SoftmaxWithCrossEntropyOpArgumentMapping);
+PD_REGISTER_ARG_MAPPING_FN(softmax_with_cross_entropy_grad, phi::SoftmaxWithCrossEntropyGradOpArgumentMapping);
+

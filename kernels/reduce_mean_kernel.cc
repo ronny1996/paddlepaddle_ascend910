@@ -69,10 +69,11 @@ void MeanRawGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
     reduce_numel *= input_dims_vec[d];
   }
 
+  auto tmp = input_dims_vec;
   const auto& runner =
       NpuOpRunner("FillV2D", {}, {*x_grad},
                   {{"value", 1.0f / static_cast<float>(reduce_numel)},
-                   {"dims", input_dims_vec}});
+                   {"dims", tmp}});
   runner.Run(stream);
 
   phi::DenseTensor transformed_x_grad, transformed_out_grad;

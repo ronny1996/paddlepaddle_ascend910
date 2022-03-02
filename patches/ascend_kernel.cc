@@ -58,6 +58,54 @@ void SGDKernel(const Context& dev_ctx, const phi::DenseTensor& param_var,
                const phi::DenseTensor& learning_rate,
                const phi::DenseTensor& grad_var, phi::DenseTensor* param_out) {}
 
+template <typename T, typename Context>
+void ArgsortKernel(const Context& dev_ctx,
+               const phi::DenseTensor& x,
+               int axis,
+               bool descending,
+               phi::DenseTensor* output,
+               phi::DenseTensor* indices) {}
+
+#define DECALRE_COMPARE_KERNEL(compare_kernel) \
+  template <typename T, typename Context>      \
+  void compare_kernel(const Context& ctx,      \
+                      const DenseTensor& x,    \
+                      const DenseTensor& y,    \
+                      int axis,                \
+                      DenseTensor* out) {}
+
+DECALRE_COMPARE_KERNEL(LessThanKernel)
+DECALRE_COMPARE_KERNEL(GreaterEqualKernel)
+DECALRE_COMPARE_KERNEL(EqualKernel)
+DECALRE_COMPARE_KERNEL(NotEqualKernel)
+#undef DECALRE_COMPARE_KERNEL
+
+template <typename T, typename Context>
+void SoftmaxWithCrossEntropyKernel(const Context& dev_ctx,
+                   const phi::DenseTensor& logits,
+                   const phi::DenseTensor& labels,
+                   bool soft_label,
+                   bool use_softmax,
+                   bool numeric_stable_mode,
+                   int ignore_index,
+                   int axis,
+                   phi::DenseTensor* softmax,
+                   phi::DenseTensor* loss,
+                   phi::DenseTensor* backprop) {}
+
+template <typename T, typename Context>
+void SoftmaxWithCrossEntropyGradKernel(const Context& dev_ctx,
+                   const phi::DenseTensor& labels,
+                   const phi::DenseTensor& softmax,
+                   const phi::DenseTensor& backprop,
+                   const phi::DenseTensor& loss_grad,
+                   bool soft_label,
+                   bool use_softmax,
+                   bool numeric_stable_mode,
+                   int ignore_index,
+                   int axis,
+                   phi::DenseTensor* logits_grad) {}
+
 }  // namespace phi
 
 PD_REGISTER_KERNEL(max_raw, CPU, ALL_LAYOUT, phi::MaxRawKernel, float, double,
@@ -80,3 +128,51 @@ PD_REGISTER_KERNEL(slice, CPU, ALL_LAYOUT, phi::SliceKernel, float, double,
                    bool) {}
 
 PD_REGISTER_KERNEL(sgd, CPU, ALL_LAYOUT, phi::SGDKernel, float, double, bool) {}
+
+PD_REGISTER_KERNEL(argsort, CPU, ALL_LAYOUT, phi::ArgsortKernel, float, double) {}
+
+PD_REGISTER_KERNEL(less_than,
+                   CPU,
+                   ALL_LAYOUT,
+                   phi::LessThanKernel,
+                   bool,
+                   int16_t,
+                   int,
+                   int64_t,
+                   float,
+                   double) {}
+PD_REGISTER_KERNEL(greater_equal,
+                   CPU,
+                   ALL_LAYOUT,
+                   phi::GreaterEqualKernel,
+                   bool,
+                   int16_t,
+                   int,
+                   int64_t,
+                   float,
+                   double) {}
+PD_REGISTER_KERNEL(equal,
+                   CPU,
+                   ALL_LAYOUT,
+                   phi::EqualKernel,
+                   bool,
+                   int16_t,
+                   int,
+                   int64_t,
+                   float,
+                   double) {}
+PD_REGISTER_KERNEL(not_equal,
+                   CPU,
+                   ALL_LAYOUT,
+                   phi::NotEqualKernel,
+                   bool,
+                   int16_t,
+                   int,
+                   int64_t,
+                   float,
+                   double) {}
+
+PD_REGISTER_KERNEL(
+    softmax_with_cross_entropy, CPU, ALL_LAYOUT, phi::SoftmaxWithCrossEntropyKernel, float, double) {}
+
+PD_REGISTER_KERNEL(softmax_with_cross_entropy_grad, CPU, ALL_LAYOUT, phi::SoftmaxWithCrossEntropyGradKernel, float) {}
