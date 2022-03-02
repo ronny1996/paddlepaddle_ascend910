@@ -1,3 +1,65 @@
+diff --git a/paddle/phi/kernels/ascend_kernel.h b/paddle/phi/kernels/ascend_kernel.h
+new file mode 100644
+index 0000000000..a52d42cd46
+--- /dev/null
++++ b/paddle/phi/kernels/ascend_kernel.h
+@@ -0,0 +1,69 @@
++
++#pragma once
++
++#include "paddle/phi/core/dense_tensor.h"
++
++namespace phi {
++
++template <typename T, typename Context>
++void ArgsortKernel(const Context& dev_ctx,
++               const phi::DenseTensor& x,
++               int axis,
++               bool descending,
++               phi::DenseTensor* output,
++               phi::DenseTensor* indices);
++
++#define DECALRE_COMPARE_KERNEL(compare_kernel) \
++  template <typename T, typename Context>      \
++  void compare_kernel(const Context& ctx,      \
++                      const DenseTensor& x,    \
++                      const DenseTensor& y,    \
++                      int axis,                \
++                      DenseTensor* out);
++
++DECALRE_COMPARE_KERNEL(LessThanKernel)
++DECALRE_COMPARE_KERNEL(GreaterEqualKernel)
++DECALRE_COMPARE_KERNEL(EqualKernel)
++DECALRE_COMPARE_KERNEL(NotEqualKernel)
++#undef DECALRE_COMPARE_KERNEL
++
++template <typename T, typename Context>
++void SoftmaxWithCrossEntropyKernel(const Context& dev_ctx,
++                   const phi::DenseTensor& logits,
++                   const phi::DenseTensor& labels,
++                   bool soft_label,
++                   bool use_softmax,
++                   bool numeric_stable_mode,
++                   int ignore_index,
++                   int axis,
++                   phi::DenseTensor* softmax,
++                   phi::DenseTensor* loss,
++                   phi::DenseTensor* backprop);
++
++template <typename T, typename Context>
++void SoftmaxWithCrossEntropyGradKernel(const Context& dev_ctx,
++                   const phi::DenseTensor& labels,
++                   const phi::DenseTensor& softmax,
++                   const phi::DenseTensor& backprop,
++                   const phi::DenseTensor& loss_grad,
++                   bool soft_label,
++                   bool use_softmax,
++                   bool numeric_stable_mode,
++                   int ignore_index,
++                   int axis,
++                   phi::DenseTensor* logits_grad);
++
++}  // namespace phi
 diff --git a/paddle/phi/kernels/cpu/ascend_kernel.cc b/paddle/phi/kernels/cpu/ascend_kernel.cc
 new file mode 100644
 index 0000000000..36cb17719b
@@ -5,6 +67,8 @@ index 0000000000..36cb17719b
 +++ b/paddle/phi/kernels/cpu/ascend_kernel.cc
 @@ -0,0 +1,92 @@
 +#include "paddle/phi/kernels/ascend_kernel.h"
++#include "paddle/phi/backends/cpu/cpu_context.h"
++#include "paddle/phi/core/kernel_registry.h"
 +
 +namespace phi {
 +
@@ -71,6 +135,54 @@ index 0000000000..36cb17719b
 +                            const phi::DenseTensor& grad_var,
 +                            phi::DenseTensor* param_out) {}
 +    
++template <typename T, typename Context>
++void ArgsortKernel(const Context& dev_ctx,
++               const phi::DenseTensor& x,
++               int axis,
++               bool descending,
++               phi::DenseTensor* output,
++               phi::DenseTensor* indices) {}
++
++#define DECALRE_COMPARE_KERNEL(compare_kernel) \
++  template <typename T, typename Context>      \
++  void compare_kernel(const Context& ctx,      \
++                      const DenseTensor& x,    \
++                      const DenseTensor& y,    \
++                      int axis,                \
++                      DenseTensor* out) {}
++
++DECALRE_COMPARE_KERNEL(LessThanKernel)
++DECALRE_COMPARE_KERNEL(GreaterEqualKernel)
++DECALRE_COMPARE_KERNEL(EqualKernel)
++DECALRE_COMPARE_KERNEL(NotEqualKernel)
++#undef DECALRE_COMPARE_KERNEL
++
++template <typename T, typename Context>
++void SoftmaxWithCrossEntropyKernel(const Context& dev_ctx,
++                   const phi::DenseTensor& logits,
++                   const phi::DenseTensor& labels,
++                   bool soft_label,
++                   bool use_softmax,
++                   bool numeric_stable_mode,
++                   int ignore_index,
++                   int axis,
++                   phi::DenseTensor* softmax,
++                   phi::DenseTensor* loss,
++                   phi::DenseTensor* backprop) {}
++
++template <typename T, typename Context>
++void SoftmaxWithCrossEntropyGradKernel(const Context& dev_ctx,
++                   const phi::DenseTensor& labels,
++                   const phi::DenseTensor& softmax,
++                   const phi::DenseTensor& backprop,
++                   const phi::DenseTensor& loss_grad,
++                   bool soft_label,
++                   bool use_softmax,
++                   bool numeric_stable_mode,
++                   int ignore_index,
++                   int axis,
++                   phi::DenseTensor* logits_grad) {}
++
 +} // namespace phi
 +
 +PD_REGISTER_KERNEL(
@@ -96,6 +208,52 @@ index 0000000000..36cb17719b
 +
 +PD_REGISTER_KERNEL(
 +    sgd, CPU, ALL_LAYOUT, phi::SGDKernel, float, double, bool) {}
++PD_REGISTER_KERNEL(argsort, CPU, ALL_LAYOUT, phi::ArgsortKernel, float, double) {}
++
++PD_REGISTER_KERNEL(less_than,
++                   CPU,
++                   ALL_LAYOUT,
++                   phi::LessThanKernel,
++                   bool,
++                   int16_t,
++                   int,
++                   int64_t,
++                   float,
++                   double) {}
++PD_REGISTER_KERNEL(greater_equal,
++                   CPU,
++                   ALL_LAYOUT,
++                   phi::GreaterEqualKernel,
++                   bool,
++                   int16_t,
++                   int,
++                   int64_t,
++                   float,
++                   double) {}
++PD_REGISTER_KERNEL(equal,
++                   CPU,
++                   ALL_LAYOUT,
++                   phi::EqualKernel,
++                   bool,
++                   int16_t,
++                   int,
++                   int64_t,
++                   float,
++                   double) {}
++PD_REGISTER_KERNEL(not_equal,
++                   CPU,
++                   ALL_LAYOUT,
++                   phi::NotEqualKernel,
++                   bool,
++                   int16_t,
++                   int,
++                   int64_t,
++                   float,
++                   double) {}
++
++PD_REGISTER_KERNEL(
++    softmax_with_cross_entropy, CPU, ALL_LAYOUT, phi::SoftmaxWithCrossEntropyKernel, float, double) {}
+
 diff --git a/paddle/phi/ops/compat/ascend_sig.cc b/paddle/phi/ops/compat/ascend_sig.cc
 new file mode 100644
 index 0000000000..54ad0aa805
@@ -149,6 +307,37 @@ index 0000000000..54ad0aa805
 +  return KernelSignature("sgd", {"Param", "LearningRate", "Grad"}, {}, {"ParamOut"});
 +}
 +
++KernelSignature LessThanArgumentMapping(const ArgumentMappingContext& ctx) {
++  return KernelSignature("less_than", {"X", "Y"}, {"axis"}, {"Out"});
++}
++
++KernelSignature GreaterEqualArgumentMapping(const ArgumentMappingContext& ctx) {
++  return KernelSignature("greater_equal", {"X", "Y"}, {"axis"}, {"Out"});
++}
++
++KernelSignature EqualArgumentMapping(const ArgumentMappingContext& ctx) {
++  return KernelSignature("equal", {"X", "Y"}, {"axis"}, {"Out"});
++}
++
++KernelSignature NotEqualArgumentMapping(const ArgumentMappingContext& ctx) {
++  return KernelSignature("not_equal", {"X", "Y"}, {"axis"}, {"Out"});
++}
++
++KernelSignature SoftmaxWithCrossEntropyOpArgumentMapping(const ArgumentMappingContext& ctx) {
++  return KernelSignature("softmax_with_cross_entropy",
++        {"Logits", "Label"},
++        {"soft_label", "use_softmax", "numeric_stable_mode", "ignore_index", "axis"},
++        {"Softmax", "Loss", "Backprop"});
++}
++
++KernelSignature SoftmaxWithCrossEntropyGradOpArgumentMapping(
++    const ArgumentMappingContext& ctx) {
++  return KernelSignature("softmax_with_cross_entropy_grad",
++                         {"Label", "Softmax", "Backprop", GradVarName("Loss")},
++                         {"soft_label", "use_softmax", "numeric_stable_mode", "ignore_index", "axis"},
++                         {GradVarName("Logits")});
++}
++
 +}  // namespace phi
 +
 +PD_REGISTER_BASE_KERNEL_NAME(reduce_max, max);
@@ -160,3 +349,11 @@ index 0000000000..54ad0aa805
 +PD_REGISTER_ARG_MAPPING_FN(reduce_mean_grad, phi::ReduceMeanGradOpArgumentMapping);
 +PD_REGISTER_ARG_MAPPING_FN(slice, phi::SliceOpArgumentMapping);
 +PD_REGISTER_ARG_MAPPING_FN(sgd, phi::SGDOpArgumentMapping);
++PD_REGISTER_ARG_MAPPING_FN(less_than, phi::LessThanArgumentMapping);
++PD_REGISTER_ARG_MAPPING_FN(greater_equal, phi::GreaterEqualArgumentMapping);
++PD_REGISTER_ARG_MAPPING_FN(equal, phi::EqualArgumentMapping);
++PD_REGISTER_ARG_MAPPING_FN(not_equal, phi::NotEqualArgumentMapping);
++
++PD_REGISTER_ARG_MAPPING_FN(softmax_with_cross_entropy, phi::SoftmaxWithCrossEntropyOpArgumentMapping);
++PD_REGISTER_ARG_MAPPING_FN(softmax_with_cross_entropy_grad, phi::SoftmaxWithCrossEntropyGradOpArgumentMapping);
+
