@@ -128,7 +128,7 @@ void SliceKernel(const Context& dev_ctx,
 
 } // namespace custom_kernel
 
-// PD_REGISTER_PLUGIN_KERNEL(slice,
-//                           Ascend910,
-//                           ALL_LAYOUT,
-//                           custom_kernel::SliceKernel, phi::dtype::float16, float, double, int16_t, int32_t, int64_t, bool) {}
+PD_REGISTER_PLUGIN_KERNEL(slice,
+                          Ascend910,
+                          ALL_LAYOUT,
+                          custom_kernel::SliceKernel, phi::dtype::float16, float, double, int16_t, int32_t, int64_t, bool) {}

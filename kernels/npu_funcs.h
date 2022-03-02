@@ -34,10 +34,10 @@ inline void TensorCopy(const Context& dev_ctx,
           phi::DenseTensor* dst) {
   auto* src_ptr = src.data();
   const auto& src_place = src.place();
-  auto& dst_place = dst->place();
+  auto& dst_place = dev_ctx.GetPlace();
 
-  VLOG(3) << "TensorCopy " << src.dims() << " from " << src.place() << " to "
-          << src_place;
+  VLOG(3) << "TensorCopy " << src.dims() << " from " << src_place << " to "
+          << dst_place;
 
   dst->Resize(src.dims());
   auto* dst_ptr = dev_ctx.Alloc(dst, src.dtype());
@@ -175,7 +175,8 @@ inline void NpuBroadcast(const Context& dev_ctx, const phi::DenseTensor* src,
       phi::DenseTensor tmp_tensor;
       auto tmp_tensor_dims = tmp_src.dims();
       tmp_tensor_dims[i] = dst_dims[i + axis];
-      tmp_tensor.mutable_data<T>(tmp_tensor_dims, dev_ctx.GetPlace());
+      tmp_tensor.Resize(tmp_tensor_dims);
+      dev_ctx.template Alloc<T>(&tmp_tensor);
       const auto& runner =
           NpuOpRunner("TileWithAxis", {tmp_src}, {tmp_tensor},
                       {{"axis", static_cast<int64_t>(i)},
@@ -191,7 +192,8 @@ inline void NpuBroadcast(const Context& dev_ctx, const phi::DenseTensor* src,
   if (prev > 1) {
     phi::DenseTensor tmp_tensor;
     auto tmp_tensor_dims = phi::slice_ddim(dst_dims, 0, axis + src_dims.size());
-    tmp_tensor.mutable_data<T>(tmp_tensor_dims, dev_ctx.GetPlace());
+    tmp_tensor.Resize(tmp_tensor_dims);
+    dev_ctx.template Alloc<T>(&tmp_tensor);
     const auto& runner =
         NpuOpRunner("ExpandD", {tmp_src}, {tmp_tensor},
                     {{"shape", phi::vectorize<int64_t>(tmp_tensor_dims)}});
@@ -211,7 +213,8 @@ inline void NpuBroadcast(const Context& dev_ctx, const phi::DenseTensor* src,
     tmp_src.Resize(phi::make_ddim(src_dims_vec));
 
     phi::DenseTensor tmp_tensor;
-    tmp_tensor.mutable_data<T>(dst_dims, dev_ctx.GetPlace());
+    tmp_tensor.Resize(dst_dims);
+    dev_ctx.template Alloc<T>(&tmp_tensor);
     const auto& runner =
         NpuOpRunner("TileWithAxis", {tmp_src}, {tmp_tensor},
                     {{"axis", static_cast<int64_t>(axis + src_dims.size())},

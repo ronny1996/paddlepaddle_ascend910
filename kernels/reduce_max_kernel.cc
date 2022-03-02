@@ -101,14 +101,14 @@ void MaxKernel(const Context& dev_ctx, const phi::DenseTensor& x,
 
 }  // namespace custom_kernel
 
-// PD_REGISTER_PLUGIN_KERNEL(max_raw,
-//                           Ascend910,
-//                           ALL_LAYOUT,
-//                           custom_kernel::MaxRawKernel, int32_t, int64_t,
-//                           phi::dtype::float16, float) {}
+PD_REGISTER_PLUGIN_KERNEL(max_raw,
+                          Ascend910,
+                          ALL_LAYOUT,
+                          custom_kernel::MaxRawKernel, int32_t, int64_t,
+                          phi::dtype::float16, float) {}
 
-// PD_REGISTER_PLUGIN_KERNEL(max,
-//                           Ascend910,
-//                           ALL_LAYOUT,
-//                           custom_kernel::MaxKernel, int32_t, int64_t,
-//                           phi::dtype::float16, float) {}
+PD_REGISTER_PLUGIN_KERNEL(max,
+                          Ascend910,
+                          ALL_LAYOUT,
+                          custom_kernel::MaxKernel, int32_t, int64_t,
+                          phi::dtype::float16, float) {}
