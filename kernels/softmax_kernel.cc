@@ -38,6 +38,7 @@ void SoftmaxGradKernel(const Context& dev_ctx,
                        phi::DenseTensor* x_grad) {
     auto dims = x_grad->dims();
     const int rank = dims.size();
+    axis = CanonicalAxis(axis, rank);
     int64_t first_dim = 1;
     int64_t sec_dim = 1;
     for (int i = 0; i < axis; i++) {
