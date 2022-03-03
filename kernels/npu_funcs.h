@@ -270,5 +270,12 @@ inline void NpuElementWiseOpBroadcast(const Context& dev_ctx,
   NpuBroadcast<T>(dev_ctx, y, y_axis, dst_dims, transformed_y);
 }
 
+static inline int CanonicalAxis(const int axis, const int rank) {
+  if (axis < 0) {
+    return axis + rank;
+  }
+  return axis;
+}
+
 }  // namespace custom_kernel 
 
