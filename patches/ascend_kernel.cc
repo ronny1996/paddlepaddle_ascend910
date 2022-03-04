@@ -9,30 +9,40 @@ template <typename T, typename Context>
 void MinRawKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                   const std::vector<int64_t>& axes, bool keep_dim,
                   bool reduce_all, phi::DenseTensorMeta::DataType out_dtype,
-                  phi::DenseTensor* out) {}
+                  phi::DenseTensor* out) {
+  out = out;
+}
 
 template <typename T, typename Context>
 void MinKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                const std::vector<int64_t>& dims,
                phi::DenseTensorMeta::DataType out_dtype, bool keep_dim,
-               phi::DenseTensor* out) {}
+               phi::DenseTensor* out) {
+  out = out;
+}
 
 template <typename T, typename Context>
 void MaxRawKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                   const std::vector<int64_t>& axes, bool keep_dim,
                   bool reduce_all, phi::DenseTensorMeta::DataType out_dtype,
-                  phi::DenseTensor* out) {}
+                  phi::DenseTensor* out) {
+  out = out;
+}
 
 template <typename T, typename Context>
 void MaxKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                const std::vector<int64_t>& dims,
                phi::DenseTensorMeta::DataType out_dtype, bool keep_dim,
-               phi::DenseTensor* out) {}
+               phi::DenseTensor* out) {
+  out = out;
+}
 
 template <typename T, typename Context>
 void MeanGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                     const std::vector<int64_t>& dim, bool keep_dim,
-                    phi::DenseTensor* out) {}
+                    phi::DenseTensor* out) {
+  out = out;
+}
 
 template <typename T, typename Context>
 void MeanRawGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
@@ -58,6 +68,29 @@ template <typename T, typename Context>
 void SGDKernel(const Context& dev_ctx, const phi::DenseTensor& param_var,
                const phi::DenseTensor& learning_rate,
                const phi::DenseTensor& grad_var, phi::DenseTensor* param_out) {}
+
+template <typename T, typename Context>
+void AdamKernel(const Context& dev_ctx, const phi::DenseTensor& param,
+                const phi::DenseTensor& grad,
+                const phi::DenseTensor& learning_rate,
+                const phi::DenseTensor& moment1,
+                const phi::DenseTensor& moment2,
+                const phi::DenseTensor& beta1_pow_in,
+                const phi::DenseTensor& beta2_pow_in,
+                /*
+                                const phi::DenseTensor& beta1_tensor,
+                                const phi::DenseTensor& beta2_tensor,
+                                const phi::DenseTensor& epsilon_tensor,
+                                const phi::DenseTensor& master_param,
+                                const phi::DenseTensor& skip_update,
+                */
+                float beta1_f, float beta2_f, float epsilon_f, bool lazy_mode,
+                int64_t min_row_size_to_use_multithread, bool multi_precision,
+                bool use_global_beta_pow, phi::DenseTensor* param_out,
+                phi::DenseTensor* moment1_out, phi::DenseTensor* moment2_out,
+                phi::DenseTensor* beta1_pow_out, phi::DenseTensor* beta2_pow_out
+                /* phi::DenseTensor* master_param_out */
+                ){};
 
 template <typename T, typename Context>
 void ArgsortKernel(const Context& dev_ctx, const phi::DenseTensor& x, int axis,
@@ -117,7 +150,9 @@ PD_REGISTER_KERNEL(slice, CPU, ALL_LAYOUT, phi::SliceKernel, float, double,
 PD_REGISTER_KERNEL(slice_grad, CPU, ALL_LAYOUT, phi::SliceGradKernel, float,
                    double, bool) {}
 
-PD_REGISTER_KERNEL(sgd, CPU, ALL_LAYOUT, phi::SGDKernel, float, double, bool) {}
+PD_REGISTER_KERNEL(sgd, CPU, ALL_LAYOUT, phi::SGDKernel, float, double) {}
+
+PD_REGISTER_KERNEL(adam, CPU, ALL_LAYOUT, phi::AdamKernel, float, double) {}
 
 PD_REGISTER_KERNEL(argsort, CPU, ALL_LAYOUT, phi::ArgsortKernel, float,
                    double) {}
