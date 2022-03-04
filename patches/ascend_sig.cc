@@ -70,6 +70,14 @@ KernelSignature AdamOpArgumentMapping(const ArgumentMappingContext& ctx) {
       {"ParamOut", "Moment1Out", "Moment2Out", "Beta1PowOut", "Beta2PowOut"});
 }
 
+KernelSignature MomentOpArgumentMapping(const ArgumentMappingContext& ctx) {
+  return KernelSignature(
+      "moment", {"Param", "Grad", "Velocity", "LearningRate"},
+      {"mu", "use_nesterov", "regularization_method", "regularization_coeff",
+       "multi_precision", "rescale_grad"},
+      {"ParamOut", "VelocityOut"});
+}
+
 KernelSignature LessThanArgumentMapping(const ArgumentMappingContext& ctx) {
   return KernelSignature("less_than", {"X", "Y"}, {"axis"}, {"Out"});
 }
@@ -117,6 +125,7 @@ PD_REGISTER_ARG_MAPPING_FN(slice, phi::SliceOpArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(slice_grad, phi::SliceGradOpArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(sgd, phi::SGDOpArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(adam, phi::AdamOpArgumentMapping);
+PD_REGISTER_ARG_MAPPING_FN(moment, phi::MomentOpArgumentMapping);
 
 PD_REGISTER_ARG_MAPPING_FN(less_than, phi::LessThanArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(greater_equal, phi::GreaterEqualArgumentMapping);
