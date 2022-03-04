@@ -93,6 +93,16 @@ void AdamKernel(const Context& dev_ctx, const phi::DenseTensor& param,
                 ){};
 
 template <typename T, typename Context>
+void MomentKernel(const Context& dev_ctx, const phi::DenseTensor& param,
+                  const phi::DenseTensor& grad,
+                  const phi::DenseTensor& velocity,
+                  const phi::DenseTensor& learning_rate, float mu_f,
+                  bool use_nesterov, const std::string& regularization_method,
+                  float regularization_coeff, bool multi_precision,
+                  float rescale_grad, phi::DenseTensor* param_out,
+                  phi::DenseTensor* velocity_out) {}
+
+template <typename T, typename Context>
 void ArgsortKernel(const Context& dev_ctx, const phi::DenseTensor& x, int axis,
                    bool descending, phi::DenseTensor* output,
                    phi::DenseTensor* indices) {}
@@ -153,6 +163,8 @@ PD_REGISTER_KERNEL(slice_grad, CPU, ALL_LAYOUT, phi::SliceGradKernel, float,
 PD_REGISTER_KERNEL(sgd, CPU, ALL_LAYOUT, phi::SGDKernel, float, double) {}
 
 PD_REGISTER_KERNEL(adam, CPU, ALL_LAYOUT, phi::AdamKernel, float, double) {}
+
+PD_REGISTER_KERNEL(moment, CPU, ALL_LAYOUT, phi::MomentKernel, float, double) {}
 
 PD_REGISTER_KERNEL(argsort, CPU, ALL_LAYOUT, phi::ArgsortKernel, float,
                    double) {}
