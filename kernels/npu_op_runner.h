@@ -14,7 +14,7 @@ limitations under the License. */
 
 #pragma once
 
-#include "paddle/phi/core/kernel_registry.h"
+#include "paddle/phi/extension.h"
 
 #include "boost/config.hpp"
 #include "boost/variant.hpp"
