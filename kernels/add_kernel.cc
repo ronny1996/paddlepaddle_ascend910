@@ -54,7 +54,7 @@ void AddKernel(const Context& dev_ctx,
                const phi::DenseTensor& y,
                phi::DenseTensor* out) {
   int axis = -1;
-  AddRawKernel<T>(dev_ctx, x, y, axis, out);
+  custom_kernel::AddRawKernel<T>(dev_ctx, x, y, axis, out);
 }
 
 } // namespace custom_kernel

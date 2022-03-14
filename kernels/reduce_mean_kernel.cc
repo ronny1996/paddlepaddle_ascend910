@@ -42,7 +42,7 @@ void MeanKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                  const std::vector<int64_t>& dims, bool keep_dim,
                  phi::DenseTensor* out) {
   bool reduce_all = false;
-  MeanRawKernel<T>(dev_ctx, x, dims, keep_dim, reduce_all, out);
+  custom_kernel::MeanRawKernel<T>(dev_ctx, x, dims, keep_dim, reduce_all, out);
 }
 
 template <typename T, typename Context>
@@ -97,7 +97,7 @@ void MeanGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                       const std::vector<int64_t>& dims, bool keep_dim,
                       phi::DenseTensor* out) {
   bool reduce_all = false;
-  MeanRawGradKernel<T>(dev_ctx, x, out_grad, dims, keep_dim, reduce_all, out);
+  custom_kernel::MeanRawGradKernel<T>(dev_ctx, x, out_grad, dims, keep_dim, reduce_all, out);
 }
 
 }  // namespace custom_kernel

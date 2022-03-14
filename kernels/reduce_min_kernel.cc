@@ -96,7 +96,7 @@ void MinKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                phi::DenseTensorMeta::DataType out_dtype, bool keep_dim,
                phi::DenseTensor* out) {
   bool reduce_all = false;
-  MinRawKernel<T>(dev_ctx, x, dims, keep_dim, reduce_all, out_dtype, out);
+  custom_kernel::MinRawKernel<T>(dev_ctx, x, dims, keep_dim, reduce_all, out_dtype, out);
 }
 
 }  // namespace custom_kernel

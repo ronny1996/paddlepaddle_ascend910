@@ -49,7 +49,7 @@ template <typename T, typename Context>
 void MultipyKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                      const phi::DenseTensor& y, phi::DenseTensor* out) {
   int axis = -1;
-  MultiplyRawKernel<T>(dev_ctx, x, y, axis, out);
+  custom_kernel::MultiplyRawKernel<T>(dev_ctx, x, y, axis, out);
 }
 
 }  // namespace custom_kernel

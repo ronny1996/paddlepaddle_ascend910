@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 
 #include "npu_op_runner.h"
+#include "npu_funcs.h"
 
 namespace custom_kernel {
 
@@ -38,7 +39,7 @@ void SoftmaxGradKernel(const Context& dev_ctx,
                        phi::DenseTensor* x_grad) {
     auto dims = x_grad->dims();
     const int rank = dims.size();
-    axis = CanonicalAxis(axis, rank);
+    axis = custom_kernel::CanonicalAxis(axis, rank);
     int64_t first_dim = 1;
     int64_t sec_dim = 1;
     for (int i = 0; i < axis; i++) {
