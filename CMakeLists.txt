@@ -16,38 +16,44 @@ set(PADDLE_LIB_DIR     "/opt/conda/lib/python3.7/site-packages/paddle/fluid/")
 set(NPU_INC_DIR        "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/include/")
 set(NPU_LIB_DIR        "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64/")
 
-# third-party deps
-set(BOOST_INC_DIR      "/workspace/dev/Paddle/build/third_party/boost/src/extern_boost")
-set(GFLAGS_INC_DIR     "/workspace/dev/Paddle/build/third_party/install/gflags/include")
-set(GLOG_INC_DIR       "/workspace/dev/Paddle/build/third_party/install/glog/include")
-set(THIRD_PARTY_INC_DIR ${BOOST_INC_DIR} ${GFLAGS_INC_DIR} ${GLOG_INC_DIR} ${CMAKE_SOURCE_DIR}/runtime)
-
-include_directories(${PADDLE_INC_DIR} ${NPU_INC_DIR} ${THIRD_PARTY_INC_DIR})
-link_directories(${PADDLE_LIB_DIR} ${NPU_LIB_DIR})
-
 set(PLUGIN_SRCS runtime/runtime.cc)
+set(INCLUDE_DIR ${PADDLE_INC_DIR} ${NPU_INC_DIR})
 
 if (WITH_KERNELS)
-add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
-add_definitions(-DPADDLE_WITH_CUSTOM_DEVICE)
-add_definitions(-DPADDLE_WITH_CUSTOM_KERNEL)
-add_definitions(-Wno-write-strings)
-add_definitions(-Wno-terminate)
-file(GLOB PLUGIN_KERNEL_FILES RELATIVE ${CMAKE_SOURCE_DIR} kernels/*.cc)
-list(APPEND PLUGIN_SRCS ${PLUGIN_KERNEL_FILES})
+  set(BOOST_INC_DIR      "/workspace/dev/Paddle/build/third_party/boost/src/extern_boost")
+  set(GFLAGS_INC_DIR     "/workspace/dev/Paddle/build/third_party/install/gflags/include")
+  set(GLOG_INC_DIR       "/workspace/dev/Paddle/build/third_party/install/glog/include")
+  set(THREAD_INC_DIR     "/workspace/dev/Paddle/build/third_party/threadpool/src/extern_threadpool")
+
+  set(THIRD_PARTY_INC_DIR ${BOOST_INC_DIR} ${GFLAGS_INC_DIR} ${GLOG_INC_DIR} ${THREAD_INC_DIR})
+  set(RUNTIME_INC_DIR ${CMAKE_SOURCE_DIR}/runtime)
+
+  file(GLOB PLUGIN_KERNEL_FILES RELATIVE ${CMAKE_SOURCE_DIR} kernels/*.cc)
+  list(APPEND PLUGIN_SRCS ${PLUGIN_KERNEL_FILES})
+
+  list(APPEND INCLUDE_DIR ${THIRD_PARTY_INC_DIR} ${RUNTIME_INC_DIR})
+
+  find_file(CORE_AVX_FOUND core_avx.so ${PADDLE_LIB_DIR})
+  if (CORE_AVX_FOUND)
+    set(CORE_LIB ":core_avx.so")
+  else()
+    set(CORE_LIB ":core_noavx.so")
+  endif()
+
+  #add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)   # for NPU
+  add_definitions(-DPADDLE_WITH_CUSTOM_DEVICE)  # for out CustomContext
+  add_definitions(-DPADDLE_WITH_CUSTOM_KERNEL)  # for out fluid seperate
 endif()
+
+include_directories(${INCLUDE_DIR})
+link_directories(${PADDLE_LIB_DIR} ${NPU_LIB_DIR})
 
 ####### build shared library
 add_library(${PLUGIN_NAME} SHARED ${PLUGIN_SRCS})
 target_link_libraries(${PLUGIN_NAME} PRIVATE ascendcl)
+target_link_libraries(${PLUGIN_NAME} PRIVATE acl_op_compiler)
 if (WITH_KERNELS)
-find_file(CORE_AVX_FOUND core_avx.so ${PADDLE_LIB_DIR})
-if (CORE_AVX_FOUND)
-set(CORE_LIB ":core_avx.so")
-else()
-set(CORE_LIB ":core_noavx.so")
-endif()
-target_link_libraries(${PLUGIN_NAME} PRIVATE ${CORE_LIB})  # special name
+ target_link_libraries(${PLUGIN_NAME} PRIVATE ${CORE_LIB})  # special name
 endif()
 
 install(TARGETS ${PLUGIN_NAME} 

@@ -2,7 +2,7 @@
 
 #include <acl/acl.h>
 
-#include "paddle/device_ext.h"
+#include "paddle/phi/extension.h"
 
 #define ACL_CHECK(func)                                                       \
   do {                                                                        \

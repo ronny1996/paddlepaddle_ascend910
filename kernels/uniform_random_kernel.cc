@@ -92,7 +92,7 @@ void UniformRandomKernel(const Context& dev_ctx,
                          float max,
                          int seed,
                          phi::DenseTensor* out) {
-  UniformRandomRawKernel<T>(
+  custom_kernel::UniformRandomRawKernel<T>(
       dev_ctx, shape, dtype, min, max, seed, 0, 0, 0.0f, out);
 }
 

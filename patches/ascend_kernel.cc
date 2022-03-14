@@ -30,14 +30,6 @@ void MaxRawKernel(const Context& dev_ctx, const phi::DenseTensor& x,
 }
 
 template <typename T, typename Context>
-void MaxKernel(const Context& dev_ctx, const phi::DenseTensor& x,
-               const std::vector<int64_t>& dims,
-               phi::DenseTensorMeta::DataType out_dtype, bool keep_dim,
-               phi::DenseTensor* out) {
-  out = out;
-}
-
-template <typename T, typename Context>
 void MeanGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                     const std::vector<int64_t>& dim, bool keep_dim,
                     phi::DenseTensor* out) {
@@ -63,11 +55,6 @@ void SliceGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                      const phi::ScalarArray& starts_array,
                      const phi::ScalarArray& ends_array,
                      phi::DenseTensor* x_grad) {}
-
-template <typename T, typename Context>
-void SGDKernel(const Context& dev_ctx, const phi::DenseTensor& param_var,
-               const phi::DenseTensor& learning_rate,
-               const phi::DenseTensor& grad_var, phi::DenseTensor* param_out) {}
 
 template <typename T, typename Context>
 void AdamKernel(const Context& dev_ctx, const phi::DenseTensor& param,
@@ -102,11 +89,6 @@ void MomentKernel(const Context& dev_ctx, const phi::DenseTensor& param,
                   float rescale_grad, phi::DenseTensor* param_out,
                   phi::DenseTensor* velocity_out) {}
 
-template <typename T, typename Context>
-void ArgsortKernel(const Context& dev_ctx, const phi::DenseTensor& x, int axis,
-                   bool descending, phi::DenseTensor* output,
-                   phi::DenseTensor* indices) {}
-
 #define DECALRE_COMPARE_KERNEL(compare_kernel)                  \
   template <typename T, typename Context>                       \
   void compare_kernel(const Context& ctx, const DenseTensor& x, \
@@ -138,13 +120,8 @@ void SoftmaxWithCrossEntropyGradKernel(
 
 }  // namespace phi
 
-PD_REGISTER_KERNEL(max_raw, CPU, ALL_LAYOUT, phi::MaxRawKernel, float, double,
-                   bool) {}
-
 PD_REGISTER_KERNEL(min_raw, CPU, ALL_LAYOUT, phi::MinRawKernel, float, double,
                    bool) {}
-
-PD_REGISTER_KERNEL(max, CPU, ALL_LAYOUT, phi::MaxKernel, float, double, bool) {}
 
 PD_REGISTER_KERNEL(min, CPU, ALL_LAYOUT, phi::MinKernel, float, double, bool) {}
 
@@ -160,14 +137,9 @@ PD_REGISTER_KERNEL(slice, CPU, ALL_LAYOUT, phi::SliceKernel, float, double,
 PD_REGISTER_KERNEL(slice_grad, CPU, ALL_LAYOUT, phi::SliceGradKernel, float,
                    double, bool) {}
 
-PD_REGISTER_KERNEL(sgd, CPU, ALL_LAYOUT, phi::SGDKernel, float, double) {}
-
 PD_REGISTER_KERNEL(adam, CPU, ALL_LAYOUT, phi::AdamKernel, float, double) {}
 
 PD_REGISTER_KERNEL(moment, CPU, ALL_LAYOUT, phi::MomentKernel, float, double) {}
-
-PD_REGISTER_KERNEL(argsort, CPU, ALL_LAYOUT, phi::ArgsortKernel, float,
-                   double) {}
 
 PD_REGISTER_KERNEL(less_than, CPU, ALL_LAYOUT, phi::LessThanKernel, bool,
                    int16_t, int, int64_t, float, double) {}

@@ -141,7 +141,7 @@ void ReshapeWithXShapeKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                              const phi::ScalarArray& shape,
                              phi::DenseTensor* xshape, phi::DenseTensor* out) {
   phi::MetaTensor meta_out(out);
-  InferMetaFromVecValue(x, shape.GetData(), &meta_out);
+  custom_kernel::InferMetaFromVecValue(x, shape.GetData(), &meta_out);
   if (x.initialized() && x.Holder() == out->Holder()) {
     dev_ctx.Alloc(out, x.dtype());
     return;

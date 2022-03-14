@@ -2,20 +2,6 @@
 
 namespace phi {
 
-KernelSignature ReduceMaxOpArgumentMapping(const ArgumentMappingContext& ctx) {
-  bool reduce_all = paddle::any_cast<bool>(ctx.Attr("reduce_all"));
-  if (ctx.IsDenseTensorInput("X")) {
-    if (!reduce_all) {
-      return KernelSignature("max", {"X"}, {"dim", "out_dtype", "keep_dim"},
-                             {"Out"});
-    }
-    return KernelSignature("max_raw", {"X"},
-                           {"dim", "keep_dim", "reduce_all", "out_dtype"},
-                           {"Out"});
-  }
-  return KernelSignature("unregistered", {}, {}, {});
-}
-
 KernelSignature ReduceMinOpArgumentMapping(const ArgumentMappingContext& ctx) {
   bool reduce_all = paddle::any_cast<bool>(ctx.Attr("reduce_all"));
   if (ctx.IsDenseTensorInput("X")) {
@@ -53,11 +39,6 @@ KernelSignature SliceOpArgumentMapping(const ArgumentMappingContext& ctx) {
 KernelSignature SliceGradOpArgumentMapping(const ArgumentMappingContext& ctx) {
   return KernelSignature("slice_grad", {"Input", GradVarName("Out")},
                          {"axes", "starts", "ends"}, {GradVarName("Input")});
-}
-
-KernelSignature SGDOpArgumentMapping(const ArgumentMappingContext& ctx) {
-  return KernelSignature("sgd", {"Param", "LearningRate", "Grad"}, {},
-                         {"ParamOut"});
 }
 
 KernelSignature AdamOpArgumentMapping(const ArgumentMappingContext& ctx) {
@@ -113,17 +94,14 @@ KernelSignature SoftmaxWithCrossEntropyGradOpArgumentMapping(
 
 }  // namespace phi
 
-PD_REGISTER_BASE_KERNEL_NAME(reduce_max, max);
 PD_REGISTER_BASE_KERNEL_NAME(reduce_min, min);
 PD_REGISTER_BASE_KERNEL_NAME(reduce_mean_grad, mean_grad);
 
-PD_REGISTER_ARG_MAPPING_FN(reduce_max, phi::ReduceMaxOpArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(reduce_min, phi::ReduceMinOpArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(reduce_mean_grad,
                            phi::ReduceMeanGradOpArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(slice, phi::SliceOpArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(slice_grad, phi::SliceGradOpArgumentMapping);
-PD_REGISTER_ARG_MAPPING_FN(sgd, phi::SGDOpArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(adam, phi::AdamOpArgumentMapping);
 PD_REGISTER_ARG_MAPPING_FN(moment, phi::MomentOpArgumentMapping);
 

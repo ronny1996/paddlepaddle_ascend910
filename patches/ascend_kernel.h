@@ -17,26 +17,6 @@ void MinKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                phi::DenseTensorMeta::DataType out_dtype, bool keep_dim,
                phi::DenseTensor* out);
 
-template <typename T, typename Context>
-void MaxRawKernel(const Context& dev_ctx, const phi::DenseTensor& x,
-                  const std::vector<int64_t>& axes, bool keep_dim,
-                  bool reduce_all, phi::DenseTensorMeta::DataType out_dtype,
-                  phi::DenseTensor* out);
-
-template <typename T, typename Context>
-void MaxKernel(const Context& dev_ctx, const phi::DenseTensor& x,
-               const std::vector<int64_t>& dims,
-               phi::DenseTensorMeta::DataType out_dtype, bool keep_dim,
-               phi::DenseTensor* out);
-
-template <typename T, typename Context>
-void ArgsortKernel(const Context& dev_ctx,
-               const phi::DenseTensor& x,
-               int axis,
-               bool descending,
-               phi::DenseTensor* output,
-               phi::DenseTensor* indices);
-
 #define DECALRE_COMPARE_KERNEL(compare_kernel) \
   template <typename T, typename Context>      \
   void compare_kernel(const Context& ctx,      \
