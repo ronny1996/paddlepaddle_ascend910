@@ -8,7 +8,7 @@
 import numpy as np
 import paddle
 from paddle.nn import Conv2D, MaxPool2D, ReLU
-from paddle.optimizer import SGD 
+from paddle.optimizer import Adam
  
 # 定义批大小
 BATCH_SIZE = 64
@@ -75,10 +75,10 @@ paddle.set_device('Ascend910')
 mnist = MNIST()
 # 定义优化器为SGD，学习旅learning_rate为0.001
 # 注意动态图模式下必须传入parameters参数，该参数为需要优化的网络参数，本例需要优化mnist网络中的所有参数
-sgd = SGD(learning_rate=0.001, parameters=mnist.parameters())
+adam = Adam(learning_rate=0.001, parameters=mnist.parameters())
  
 # 设置全部样本的训练次数
-epoch_num = 10
+epoch_num = 5
 # 执行epoch_num次训练
 for epoch in range(epoch_num):
     # 读取训练数据进行训练
@@ -96,9 +96,9 @@ for epoch in range(epoch_num):
         # 执行反向计算
         avg_loss.backward()
         # 参数更新
-        sgd.step()
+        adam.step()
         # 将本次计算的梯度值清零，以便进行下一次迭代和梯度更新
-        sgd.clear_grad()
+        adam.clear_grad()
  
         # 输出对应epoch、batch_id下的损失值，预测精确度
         if batch_id % 100 == 0:

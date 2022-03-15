@@ -20,10 +20,10 @@ set(PLUGIN_SRCS runtime/runtime.cc)
 set(INCLUDE_DIR ${PADDLE_INC_DIR} ${NPU_INC_DIR})
 
 if (WITH_KERNELS)
-  set(BOOST_INC_DIR      "/workspace/dev/Paddle/build/third_party/boost/src/extern_boost")
-  set(GFLAGS_INC_DIR     "/workspace/dev/Paddle/build/third_party/install/gflags/include")
-  set(GLOG_INC_DIR       "/workspace/dev/Paddle/build/third_party/install/glog/include")
-  set(THREAD_INC_DIR     "/workspace/dev/Paddle/build/third_party/threadpool/src/extern_threadpool")
+  set(BOOST_INC_DIR      "/workspace/Paddle/build/third_party/boost/src/extern_boost")
+  set(GFLAGS_INC_DIR     "/workspace/Paddle/build/third_party/install/gflags/include")
+  set(GLOG_INC_DIR       "/workspace/Paddle/build/third_party/install/glog/include")
+  set(THREAD_INC_DIR     "/workspace/Paddle/build/third_party/threadpool/src/extern_threadpool")
 
   set(THIRD_PARTY_INC_DIR ${BOOST_INC_DIR} ${GFLAGS_INC_DIR} ${GLOG_INC_DIR} ${THREAD_INC_DIR})
   set(RUNTIME_INC_DIR ${CMAKE_SOURCE_DIR}/runtime)
@@ -40,7 +40,7 @@ if (WITH_KERNELS)
     set(CORE_LIB ":core_noavx.so")
   endif()
 
-  #add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)   # for NPU
+  add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)   # for NPU
   add_definitions(-DPADDLE_WITH_CUSTOM_DEVICE)  # for out CustomContext
   add_definitions(-DPADDLE_WITH_CUSTOM_KERNEL)  # for out fluid seperate
 endif()
