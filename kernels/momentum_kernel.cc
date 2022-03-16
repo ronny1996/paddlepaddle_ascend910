@@ -18,7 +18,7 @@
 namespace custom_kernel {
 
 template <typename T, typename Context>
-void MomentKernel(const Context& dev_ctx, const phi::DenseTensor& param,
+void MomentumKernel(const Context& dev_ctx, const phi::DenseTensor& param,
                   const phi::DenseTensor& grad,
                   const phi::DenseTensor& velocity,
                   const phi::DenseTensor& learning_rate, float mu_f,
@@ -76,6 +76,6 @@ void MomentKernel(const Context& dev_ctx, const phi::DenseTensor& param,
 
 }  // namespace custom_kernel
 
-PD_REGISTER_PLUGIN_KERNEL(moment, Ascend910, ALL_LAYOUT,
-                          custom_kernel::MomentKernel, phi::dtype::float16,
+PD_REGISTER_PLUGIN_KERNEL(momentum, Ascend910, ALL_LAYOUT,
+                          custom_kernel::MomentumKernel, phi::dtype::float16,
                           float, double) {}
