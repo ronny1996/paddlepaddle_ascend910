@@ -70,8 +70,73 @@ void FullKernel(const Context& dev_ctx, const phi::ScalarArray& shape,
   }
 }
 
+template <typename T, typename Context>
+void FullLikeKernel(const Context& dev_ctx,
+                    const phi::DenseTensor& x,
+                    const phi::Scalar& val,
+                    phi::DataType dtype,
+                    phi::DenseTensor* out) {
+using CommonType = typename std::common_type<
+      float,
+      typename std::conditional<std::is_same<T, phi::dtype::float16>::value,
+                                float, T>::type>::type;
+    // out->mutable_data<T>(context.GetPlace());
+    dev_ctx.template Alloc<T>(out);
+    auto value = val.to<float>();
+
+    auto common_type_value = static_cast<CommonType>(value);
+
+    PADDLE_ENFORCE_EQ(
+        (common_type_value >=
+         static_cast<CommonType>(std::numeric_limits<T>::lowest())) &&
+            (common_type_value <=
+             static_cast<CommonType>(std::numeric_limits<T>::max())),
+        true,
+        phi::errors::InvalidArgument(
+            "The filled value is out of range for target type, "
+            "current kernel type is %s, the range should between %f "
+            "and %f, but now value is %f.",
+            typeid(T).name(),
+            static_cast<CommonType>(std::numeric_limits<T>::lowest()),
+            static_cast<CommonType>(std::numeric_limits<T>::max()), value));
+
+    PADDLE_ENFORCE_EQ(
+        std::isnan(value), false,
+        phi::errors::InvalidArgument("The filled value is NaN."));
+
+    phi::DenseTensor tensor_tmp(dtype);
+    tensor_tmp.Resize({1});
+    // tensor_tmp.mutable_data<T>({1}, context.GetPlace());
+    FillNpuTensorWithConstant<T>(&tensor_tmp, dev_ctx, static_cast<T>(value));
+
+    auto stream = dev_ctx.stream();
+
+    auto shape = out->dims();
+    NpuOpRunner runner;
+    runner.SetType("Fill")
+        .AddInput(phi::vectorize(shape))
+        .AddInput(tensor_tmp)
+        .AddOutput(*out)
+        .Run(stream);
+}
+
+
 }  // namespace custom_kernel
 
 PD_REGISTER_PLUGIN_KERNEL(full, Ascend910, ALL_LAYOUT,
                           custom_kernel::FullKernel, int8_t, int32_t, int64_t,
                           float, double, bool) {}
+
+PD_REGISTER_PLUGIN_KERNEL(full_like,
+                   Ascend910,
+                   ALL_LAYOUT,
+                   custom_kernel::FullLikeKernel,
+                   float,
+                   double,
+                   int16_t,
+                   int,
+                   int64_t,
+                   bool,
+                   phi::dtype::float16) {
+  kernel->InputAt(0).SetBackend(phi::Backend::ALL_BACKEND);
+}

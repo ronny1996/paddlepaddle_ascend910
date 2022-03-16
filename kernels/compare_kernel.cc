@@ -64,6 +64,18 @@ namespace custom_kernel {
     runner.Run(stream);
   }
 
+  template <typename T, typename Context>
+  void GreaterThanKernel(const Context& dev_ctx,
+                      const phi::DenseTensor& x,
+                      const phi::DenseTensor& y,
+                      int axis,
+                      phi::DenseTensor* out) {
+    dev_ctx.template Alloc<bool>(out);
+    const auto& runner = NpuOpRunner("Greater", {x, y}, {*out}, {});
+    auto stream = dev_ctx.stream();
+    runner.Run(stream);
+  }
+
 } // namespace custom_kernel
 
 PD_REGISTER_PLUGIN_KERNEL(equal,
@@ -103,6 +115,17 @@ PD_REGISTER_PLUGIN_KERNEL(greater_equal,
                   Ascend910,
                   ALL_LAYOUT,
                   custom_kernel::GreaterEqualKernel,
+                  bool,
+                  int16_t,
+                  int,
+                  int64_t,
+                  float,
+                  double) {}
+
+PD_REGISTER_PLUGIN_KERNEL(greater_than,
+                  Ascend910,
+                  ALL_LAYOUT,
+                  custom_kernel::GreaterThanKernel,
                   bool,
                   int16_t,
                   int,

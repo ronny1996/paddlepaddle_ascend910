@@ -57,6 +57,88 @@ void AddKernel(const Context& dev_ctx,
   custom_kernel::AddRawKernel<T>(dev_ctx, x, y, axis, out);
 }
 
+template <typename T, typename Context>
+void AddGradKernel(const Context& dev_ctx,
+                   const phi::DenseTensor& x,
+                   const phi::DenseTensor& y,
+                   const phi::DenseTensor& dout,
+                   int axis,
+                   phi::DenseTensor* dx,
+                   phi::DenseTensor* dy) {
+
+    // auto* x = ctx.Input<framework::phi::DenseTensor>("X");
+    // auto* y = ctx.Input<framework::phi::DenseTensor>("Y");
+    // auto* dout = ctx.Input<framework::phi::DenseTensor>(framework::GradVarName("Out"));
+    // auto* dx = ctx.Output<framework::phi::DenseTensor>(framework::GradVarName("X"));
+    // auto* dy = ctx.Output<framework::phi::DenseTensor>(framework::GradVarName("Y"));
+    // int axis = ctx.Attr<int>("axis");
+
+    axis = (axis == -1 ? std::abs(x.dims().size() - y.dims().size()) : axis);
+    auto stream = dev_ctx.stream();
+    if (dx) {
+      // dx->mutable_data<T>(ctx.GetPlace());
+      dev_ctx.template Alloc<T>(dx);
+      if (dx->dims() != dout.dims()) {
+        std::vector<int> dst_dims_vec;
+        std::vector<int> reduce_axes;
+        auto src_dims = dx->dims();
+        auto dout_dims = dout.dims();
+
+        int src_axis = (src_dims.size() < dout_dims.size() ? axis : 0);
+        for (int ax = 0; ax < dout_dims.size(); ++ax) {
+          if ((ax < src_axis || ax >= src_axis + src_dims.size()) ||
+              (dout_dims[ax] > 1 && src_dims[ax - src_axis] == 1)) {
+            reduce_axes.push_back(ax);
+          } else {
+            dst_dims_vec.push_back(dout_dims[ax]);
+          }
+        }
+        if (!reduce_axes.empty()) {
+          phi::DenseTensor tmp;
+          tmp.ShareDataWith(*dx);
+          tmp.Resize(phi::make_ddim(dst_dims_vec));
+          const auto& runner =
+              NpuOpRunner("ReduceSumD", {dout}, {tmp},
+                          {{"axes", reduce_axes}, {"keep_dims", false}});
+          runner.Run(stream);
+        }
+      } else {
+        TensorCopy(dev_ctx, dout, false, dx);
+      }
+    }
+    if (dy) {
+      // dy->mutable_data<T>(ctx.GetPlace());
+      dev_ctx.template Alloc<T>(dy);
+      if (dy->dims() != dout.dims()) {
+        std::vector<int> dst_dims_vec;
+        std::vector<int> reduce_axes;
+        auto src_dims = dy->dims();
+        auto dout_dims = dout.dims();
+
+        int src_axis = (src_dims.size() < dout_dims.size() ? axis : 0);
+        for (int ax = 0; ax < dout_dims.size(); ++ax) {
+          if ((ax < src_axis || ax >= src_axis + src_dims.size()) ||
+              (dout_dims[ax] > 1 && src_dims[ax - src_axis] == 1)) {
+            reduce_axes.push_back(ax);
+          } else {
+            dst_dims_vec.push_back(dout_dims[ax]);
+          }
+        }
+        if (!reduce_axes.empty()) {
+          phi::DenseTensor tmp;
+          tmp.ShareDataWith(*dy);
+          tmp.Resize(phi::make_ddim(dst_dims_vec));
+          const auto& runner =
+              NpuOpRunner("ReduceSumD", {dout}, {tmp},
+                          {{"axes", reduce_axes}, {"keep_dims", false}});
+          runner.Run(stream);
+        }
+      } else {
+        TensorCopy(dev_ctx, dout, false, dy);
+      }
+    }
+}
+
 } // namespace custom_kernel
 
 PD_REGISTER_PLUGIN_KERNEL(add_raw,
@@ -68,3 +150,8 @@ PD_REGISTER_PLUGIN_KERNEL(add,
                           Ascend910,
                           ALL_LAYOUT,
                           custom_kernel::AddKernel, int8_t, int32_t, int64_t, float, double) {}
+
+PD_REGISTER_PLUGIN_KERNEL(add_grad,
+                          Ascend910,
+                          ALL_LAYOUT,
+                          custom_kernel::AddGradKernel, int8_t, int32_t, int64_t, float, double) {}
