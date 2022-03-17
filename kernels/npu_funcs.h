@@ -31,16 +31,19 @@ template <typename Context>
 inline void TensorCopy(const Context& dev_ctx,
           const phi::DenseTensor& src,
           bool blocking,
-          phi::DenseTensor* dst) {
+          phi::DenseTensor* dst, const phi::Place& dst_place = phi::CustomPlace()) {
   auto* src_ptr = src.data();
   const auto& src_place = src.place();
-  auto& dst_place = dev_ctx.GetPlace();
+  auto dst_place_ = dst_place;
+  if (dst_place_.GetType() != phi::AllocationType::CPU) {
+    dst_place_ = dev_ctx.GetPlace();
+  }
 
   VLOG(3) << "TensorCopy " << src.dims() << " from " << src_place << " to "
-          << dst_place;
+          << dst_place_;
 
   dst->Resize(src.dims());
-  auto* dst_ptr = dev_ctx.Alloc(dst, src.dtype());
+  auto dst_ptr = dst->mutable_data(dst_place_, src.dtype());
 
   if (src_ptr == dst_ptr) {
     VLOG(3) << "Skip copy the same data async from " << src_place << " to "
@@ -53,21 +56,21 @@ inline void TensorCopy(const Context& dev_ctx,
 
   auto size = src.numel() * paddle::experimental::SizeOf(src.dtype());
  
-  if (src_place.GetType() == phi::AllocationType::CPU && dst_place.GetType() == phi::AllocationType::CUSTOM) {
+  if (src_place.GetType() == phi::AllocationType::CPU && dst_place_.GetType() == phi::AllocationType::CUSTOM) {
       if (blocking) {
           MemCpyH2D(nullptr, dst_ptr, src_ptr, size);
       } else {
           AsyncMemCpyH2D(nullptr, stream, dst_ptr, src_ptr, size);
       }
-  } else if (src_place.GetType() == phi::AllocationType::CUSTOM && dst_place.GetType() == phi::AllocationType::CPU) {
+  } else if (src_place.GetType() == phi::AllocationType::CUSTOM && dst_place_.GetType() == phi::AllocationType::CPU) {
       if (blocking) {
           MemCpyD2H(nullptr, dst_ptr, src_ptr, size);
       } else {
           AsyncMemCpyD2H(nullptr, stream, dst_ptr, src_ptr, size);
       }
-  } else if (src_place.GetType() == phi::AllocationType::CUSTOM && dst_place.GetType() == phi::AllocationType::CUSTOM) {
-      if (src_place.GetDeviceType() == dst_place.GetDeviceType()) {
-        if (src_place.GetDeviceId() == dst_place.GetDeviceId()) {
+  } else if (src_place.GetType() == phi::AllocationType::CUSTOM && dst_place_.GetType() == phi::AllocationType::CUSTOM) {
+      if (src_place.GetDeviceType() == dst_place_.GetDeviceType()) {
+        if (src_place.GetDeviceId() == dst_place_.GetDeviceId()) {
             if (blocking) {
                 MemCpyD2D(nullptr, dst_ptr, src_ptr, size);
             } else {

@@ -372,7 +372,7 @@ aclDataBuffer *NpuOpRunner::CreateDataBuffer(phi::DenseTensor tensor) {
   return buffer;
 }
 
-void NpuOpRunner::Run(aclrtStream stream) const {
+void NpuOpRunner::Run(aclrtStream stream, bool sync) const {
   PADDLE_ENFORCE_NOT_NULL(
       stream, phi::errors::External("Stream should not be null, please check."));
 
@@ -389,6 +389,8 @@ void NpuOpRunner::Run(aclrtStream stream) const {
       output_buffers_.data(), attr_, ACL_ENGINE_SYS, ACL_COMPILE_SYS, NULL,
       stream);
   VLOG(4) << "after aclopCompileAndExecute: " << ret;
-  //ret = aclrtSynchronizeStream(stream);
+  if (sync) {
+    ret = aclrtSynchronizeStream(stream);
+  }
   PADDLE_ENFORCE_NPU_SUCCESS(ret);
 }
