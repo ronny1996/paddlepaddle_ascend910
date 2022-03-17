@@ -89,7 +89,7 @@ class NpuOpRunner {
 
   std::vector<aclDataBuffer *> &GetOutputBuffers();
 
-  void Run(aclrtStream stream = nullptr) const;
+  void Run(aclrtStream stream = nullptr, bool sync = false) const;
 
   static void TypeAdapter(
       const std::vector<phi::DenseTensor> &inputs, const std::vector<phi::DenseTensor> &outputs,
