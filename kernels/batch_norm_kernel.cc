@@ -208,6 +208,47 @@ void BatchNormGradKernel(const Context& dev_ctx,
     }
 }
 
+template <typename T, typename Context>
+void BatchNormInferKernel(const Context& dev_ctx,
+                          const phi::DenseTensor& x,
+                          const phi::DenseTensor& scale,
+                          const phi::DenseTensor& bias,
+                          const phi::DenseTensor& mean,
+                          const phi::DenseTensor& variance,
+                          float momentum,
+                          float epsilon,
+                          const std::string& data_layout_str,
+                          phi::DenseTensor* y,
+                          phi::DenseTensor* mean_out,
+                          phi::DenseTensor* variance_out) {
+    phi::DataLayout data_layout = StringToDataLayout(data_layout_str);
+
+    const auto &x_dims = x.dims();
+    PADDLE_ENFORCE_EQ(
+        (x_dims.size() == 4UL || x_dims.size() == 3UL), true,
+        phi::errors::InvalidArgument(
+            "The input tensor X's dimension must equal to 3 or 4. "
+            " But got X's shape = [%s], X's dimension = [%d].",
+            x_dims.to_str(), x_dims.size()));
+
+    y->mutable_data<T>(dev_ctx.GetPlace());
+
+    phi::DenseTensor x_tensor;
+    phi::DenseTensor y_tesnor;
+    x_tensor.ShareDataWith(x);
+    y_tesnor.ShareDataWith(*y);
+    if (data_layout == phi::DataLayout::kNHWC) {
+      x_tensor.set_layout(phi::DataLayout::kNHWC);
+      y_tesnor.set_layout(phi::DataLayout::kNHWC);
+    }
+
+    auto stream = dev_ctx.stream();
+    const auto &runner_infer = NpuOpRunner(
+        "BNInfer", {x_tensor, scale, bias, mean, variance},
+        {y_tesnor}, {{"epsilon", epsilon}});
+    runner_infer.Run(stream);
+  }
+
 }  // namespace custom_kernel
 
 PD_REGISTER_PLUGIN_KERNEL(batch_norm, Ascend910, ALL_LAYOUT,
@@ -216,4 +257,8 @@ PD_REGISTER_PLUGIN_KERNEL(batch_norm, Ascend910, ALL_LAYOUT,
 
 PD_REGISTER_PLUGIN_KERNEL(batch_norm_grad, Ascend910, ALL_LAYOUT,
                           custom_kernel::BatchNormGradKernel, phi::dtype::float16,
+                          float, double) {}
+
+PD_REGISTER_PLUGIN_KERNEL(batch_norm_infer, Ascend910, ALL_LAYOUT,
+                          custom_kernel::BatchNormInferKernel, phi::dtype::float16,
                           float, double) {}

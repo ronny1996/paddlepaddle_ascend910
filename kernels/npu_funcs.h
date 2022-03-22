@@ -280,5 +280,26 @@ static inline int CanonicalAxis(const int axis, const int rank) {
   return axis;
 }
 
+inline phi::DataLayout StringToDataLayout(const std::string& str) {
+  std::string s(str);
+  for (size_t i = 0; i < s.size(); ++i) {
+    s[i] = toupper(s[i]);
+  }
+
+  if (s == "NHWC") {
+    return phi::DataLayout::kNHWC;
+  } else if (s == "NCHW") {
+    return phi::DataLayout::kNCHW;
+  } else if (s == "ANYLAYOUT") {
+    return phi::DataLayout::kAnyLayout;
+  } else if (s == "MKLDNNLAYOUT") {
+    return phi::DataLayout::kMKLDNN;
+  } else if (s == "SPARSE_COO") {
+    return phi::DataLayout::SPARSE_COO;
+  } else if (s == "SPARSE_CSR") {
+    return phi::DataLayout::SPARSE_CSR;
+  } else {
+  }
+}
 }  // namespace custom_kernel 
 
