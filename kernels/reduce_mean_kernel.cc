@@ -49,7 +49,10 @@ template <typename T, typename Context>
 void MeanRawGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                           const phi::DenseTensor& out_grad,
                           const std::vector<int64_t>& axes, bool keep_dim,
-                          bool reduce_all, phi::DenseTensor* x_grad) {
+                          bool reduce_all, 
+                          phi::DataType in_dtype,
+                          phi::DataType out_dtype,
+                          phi::DenseTensor* x_grad) {
   aclrtStream stream = static_cast<aclrtStream>(dev_ctx.stream());
   auto reduce_dims = axes;
   auto input_dims_vec = phi::vectorize(x.dims());
@@ -95,9 +98,11 @@ template <typename T, typename Context>
 void MeanGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                       const phi::DenseTensor& out_grad,
                       const std::vector<int64_t>& dims, bool keep_dim,
+                      bool reduce_all,
+                      phi::DataType in_dtype,
+                      phi::DataType out_dtype,
                       phi::DenseTensor* out) {
-  bool reduce_all = false;
-  custom_kernel::MeanRawGradKernel<T>(dev_ctx, x, out_grad, dims, keep_dim, reduce_all, out);
+  custom_kernel::MeanRawGradKernel<T>(dev_ctx, x, out_grad, dims, keep_dim, reduce_all, in_dtype, out_dtype, out);
 }
 
 }  // namespace custom_kernel

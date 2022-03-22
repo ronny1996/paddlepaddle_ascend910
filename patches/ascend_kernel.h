@@ -17,20 +17,6 @@ void MinKernel(const Context& dev_ctx, const phi::DenseTensor& x,
                phi::DenseTensorMeta::DataType out_dtype, bool keep_dim,
                phi::DenseTensor* out);
 
-#define DECALRE_COMPARE_KERNEL(compare_kernel) \
-  template <typename T, typename Context>      \
-  void compare_kernel(const Context& ctx,      \
-                      const DenseTensor& x,    \
-                      const DenseTensor& y,    \
-                      int axis,                \
-                      DenseTensor* out);
-
-DECALRE_COMPARE_KERNEL(LessThanKernel)
-DECALRE_COMPARE_KERNEL(GreaterEqualKernel)
-DECALRE_COMPARE_KERNEL(EqualKernel)
-DECALRE_COMPARE_KERNEL(NotEqualKernel)
-#undef DECALRE_COMPARE_KERNEL
-
 template <typename T, typename Context>
 void SoftmaxWithCrossEntropyKernel(const Context& dev_ctx,
                    const phi::DenseTensor& logits,

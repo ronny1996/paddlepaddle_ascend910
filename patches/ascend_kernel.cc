@@ -89,17 +89,6 @@ void MomentKernel(const Context& dev_ctx, const phi::DenseTensor& param,
                   float rescale_grad, phi::DenseTensor* param_out,
                   phi::DenseTensor* velocity_out) {}
 
-#define DECALRE_COMPARE_KERNEL(compare_kernel)                  \
-  template <typename T, typename Context>                       \
-  void compare_kernel(const Context& ctx, const DenseTensor& x, \
-                      const DenseTensor& y, int axis, DenseTensor* out) {}
-
-DECALRE_COMPARE_KERNEL(LessThanKernel)
-DECALRE_COMPARE_KERNEL(GreaterEqualKernel)
-DECALRE_COMPARE_KERNEL(EqualKernel)
-DECALRE_COMPARE_KERNEL(NotEqualKernel)
-#undef DECALRE_COMPARE_KERNEL
-
 template <typename T, typename Context>
 void SoftmaxWithCrossEntropyKernel(const Context& dev_ctx,
                                    const phi::DenseTensor& logits,
@@ -120,16 +109,16 @@ void SoftmaxWithCrossEntropyGradKernel(
 
 }  // namespace phi
 
-PD_REGISTER_KERNEL(min_raw, CPU, ALL_LAYOUT, phi::MinRawKernel, float, double,
-                   bool) {}
+// PD_REGISTER_KERNEL(min_raw, CPU, ALL_LAYOUT, phi::MinRawKernel, float, double,
+//                    bool) {}
 
-PD_REGISTER_KERNEL(min, CPU, ALL_LAYOUT, phi::MinKernel, float, double, bool) {}
+// PD_REGISTER_KERNEL(min, CPU, ALL_LAYOUT, phi::MinKernel, float, double, bool) {}
 
 PD_REGISTER_KERNEL(mean_raw_grad, CPU, ALL_LAYOUT, phi::MeanRawGradKernel,
                    float, double, bool) {}
 
-PD_REGISTER_KERNEL(mean_grad, CPU, ALL_LAYOUT, phi::MeanGradKernel, float,
-                   double, bool) {}
+// PD_REGISTER_KERNEL(mean_grad, CPU, ALL_LAYOUT, phi::MeanGradKernel, float,
+//                    double, bool) {}
 
 PD_REGISTER_KERNEL(slice, CPU, ALL_LAYOUT, phi::SliceKernel, float, double,
                    bool) {}
@@ -139,16 +128,16 @@ PD_REGISTER_KERNEL(slice_grad, CPU, ALL_LAYOUT, phi::SliceGradKernel, float,
 
 PD_REGISTER_KERNEL(adam, CPU, ALL_LAYOUT, phi::AdamKernel, float, double) {}
 
-PD_REGISTER_KERNEL(moment, CPU, ALL_LAYOUT, phi::MomentKernel, float, double) {}
+PD_REGISTER_KERNEL(momentum, CPU, ALL_LAYOUT, phi::MomentKernel, float, double) {}
 
-PD_REGISTER_KERNEL(less_than, CPU, ALL_LAYOUT, phi::LessThanKernel, bool,
-                   int16_t, int, int64_t, float, double) {}
-PD_REGISTER_KERNEL(greater_equal, CPU, ALL_LAYOUT, phi::GreaterEqualKernel,
-                   bool, int16_t, int, int64_t, float, double) {}
-PD_REGISTER_KERNEL(equal, CPU, ALL_LAYOUT, phi::EqualKernel, bool, int16_t, int,
-                   int64_t, float, double) {}
-PD_REGISTER_KERNEL(not_equal, CPU, ALL_LAYOUT, phi::NotEqualKernel, bool,
-                   int16_t, int, int64_t, float, double) {}
+// PD_REGISTER_KERNEL(less_than, CPU, ALL_LAYOUT, phi::LessThanKernel, bool,
+//                    int16_t, int, int64_t, float, double) {}
+// PD_REGISTER_KERNEL(greater_equal, CPU, ALL_LAYOUT, phi::GreaterEqualKernel,
+//                    bool, int16_t, int, int64_t, float, double) {}
+// PD_REGISTER_KERNEL(equal, CPU, ALL_LAYOUT, phi::EqualKernel, bool, int16_t, int,
+//                    int64_t, float, double) {}
+// PD_REGISTER_KERNEL(not_equal, CPU, ALL_LAYOUT, phi::NotEqualKernel, bool,
+//                    int16_t, int, int64_t, float, double) {}
 
 PD_REGISTER_KERNEL(softmax_with_cross_entropy, CPU, ALL_LAYOUT,
                    phi::SoftmaxWithCrossEntropyKernel, float, double) {}
