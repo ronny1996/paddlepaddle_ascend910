@@ -115,10 +115,10 @@ PD_REGISTER_PLUGIN_KERNEL(mean,
                           ALL_LAYOUT,
                           custom_kernel::MeanKernel, float) {}
 
-PD_REGISTER_PLUGIN_KERNEL(mean_raw_grad,
-                          Ascend910,
-                          ALL_LAYOUT,
-                          custom_kernel::MeanRawGradKernel, float) {}
+//PD_REGISTER_PLUGIN_KERNEL(mean_raw_grad,
+//                          Ascend910,
+//                          ALL_LAYOUT,
+//                          custom_kernel::MeanRawGradKernel, float) {}
 
 PD_REGISTER_PLUGIN_KERNEL(mean_grad,
                           Ascend910,

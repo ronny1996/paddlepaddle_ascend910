@@ -1,7 +1,7 @@
 #include "paddle/phi/core/compat/op_utils.h"
 
 namespace phi {
-KernelSignature MergedMomentOpArgumentMapping(
+KernelSignature MomentOpArgumentMapping(
     const ArgumentMappingContext& ctx) {
   return KernelSignature(
       "momentum", {"Param", "Grad", "Velocity", "LearningRate"},
@@ -12,5 +12,5 @@ KernelSignature MergedMomentOpArgumentMapping(
 
 }  // namespace phi
 
-PD_REGISTER_ARG_MAPPING_FN(merged_momentum, phi::MergedMomentOpArgumentMapping);
+PD_REGISTER_ARG_MAPPING_FN(momentum, phi::MomentOpArgumentMapping);
 
