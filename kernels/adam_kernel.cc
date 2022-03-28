@@ -18,31 +18,33 @@
 namespace custom_kernel {
 
 template <typename T, typename Context>
-void AdamKernel(const Context& dev_ctx, const phi::DenseTensor& param,
+void AdamKernel(const Context& dev_ctx,
+                const phi::DenseTensor& param,
                 const phi::DenseTensor& grad,
                 const phi::DenseTensor& learning_rate,
                 const phi::DenseTensor& moment1,
                 const phi::DenseTensor& moment2,
                 const phi::DenseTensor& beta1_pow_in,
                 const phi::DenseTensor& beta2_pow_in,
-                /*
-                                const phi::DenseTensor& beta1_tensor,
-                                const phi::DenseTensor& beta2_tensor,
-                                const phi::DenseTensor& epsilon_tensor,
-                                const phi::DenseTensor& master_param,
-                                const phi::DenseTensor& skip_update,
-                */
-                float beta1_f, float beta2_f, float epsilon_f, bool lazy_mode,
-                int64_t min_row_size_to_use_multithread, bool multi_precision,
-                bool use_global_beta_pow, phi::DenseTensor* param_out,
-                phi::DenseTensor* moment1_out, phi::DenseTensor* moment2_out,
-                phi::DenseTensor* beta1_pow_out, phi::DenseTensor* beta2_pow_out
-                /* phi::DenseTensor* master_param_out */
-                ) {
+                paddle::optional<const phi::DenseTensor&> master_param,
+                paddle::optional<const phi::DenseTensor&> skip_update,
+                const phi::Scalar& beta1_in,
+                const phi::Scalar& beta2_in,
+                const phi::Scalar& epsilon_in,
+                bool lazy_mode,
+                int64_t min_row_size_to_use_multithread,
+                bool multi_precision,
+                bool use_global_beta_pow,
+                phi::DenseTensor* param_out,
+                phi::DenseTensor* moment1_out,
+                phi::DenseTensor* moment2_out,
+                phi::DenseTensor* beta1_pow_out,
+                phi::DenseTensor* beta2_pow_out,
+                phi::DenseTensor* master_param_out) {
   phi::DenseTensor* beta1_pow = const_cast<phi::DenseTensor*>(&beta1_pow_in);
   phi::DenseTensor* beta2_pow = const_cast<phi::DenseTensor*>(&beta2_pow_in);
 
-  bool skip_update = false;
+  // bool skip_update = false;
   // if (ctx.HasInput("SkipUpdate")) {
   //   auto* skip_update_tensor = ctx.Input<Tensor>("SkipUpdate");
   //   PADDLE_ENFORCE_EQ(skip_update_tensor->numel(), 1,
@@ -120,7 +122,8 @@ void AdamKernel(const Context& dev_ctx, const phi::DenseTensor& param,
   //                         "Input(Beta1Tensor) size must be 1, but get %d",
   //                         beta1_tensor->numel()));
   // } else {
-  T beta1 = static_cast<T>(beta1_f);
+
+  T beta1 = beta1_in.to<T>();
   beta1_tmp.Resize({1});
   dev_ctx.template Alloc<T>(&beta1_tmp);
   FillNpuTensorWithConstant<T>(&beta1_tmp, dev_ctx, beta1);
@@ -134,7 +137,7 @@ void AdamKernel(const Context& dev_ctx, const phi::DenseTensor& param,
   //                         "Input(Beta2Tensor) size must be 1, but get %d",
   //                         beta2_tensor->numel()));
   // } else {
-  T beta2 = static_cast<T>(beta2_f);
+  T beta2 = beta2_in.to<T>();
   beta2_tmp.Resize({1});
   dev_ctx.template Alloc<T>(&beta2_tmp);
   FillNpuTensorWithConstant<T>(&beta2_tmp, dev_ctx, beta2);
@@ -148,7 +151,7 @@ void AdamKernel(const Context& dev_ctx, const phi::DenseTensor& param,
   //                         "Input(EpsilonTensor) size must be 1, but get %d",
   //                         epsilon_tensor->numel()));
   // } else {
-  T epsilon = static_cast<T>(epsilon_f);
+  T epsilon = epsilon_in.to<T>();
   epsilon_tmp.Resize({1});
   dev_ctx.template Alloc<T>(&epsilon_tmp);
   FillNpuTensorWithConstant<T>(&epsilon_tmp, dev_ctx, epsilon);
