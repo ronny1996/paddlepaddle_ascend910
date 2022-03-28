@@ -46,14 +46,17 @@ void UpdateAttr(const phi::DDim& in_dims, const std::vector<int> axes,
 namespace custom_kernel {
 
 template <typename T, typename Context>
-void SliceKernel(const Context& dev_ctx, const phi::DenseTensor& x,
-                 const phi::ScalarArray& axes_array,
-                 const phi::ScalarArray& starts_array,
-                 const phi::ScalarArray& ends_array, phi::DenseTensor* out) {
-  auto axes_int = axes_array.GetData();
+void SliceRawKernel(const Context& dev_ctx,
+                    const phi::DenseTensor& x,
+                    const std::vector<int64_t>& axes_t,
+                    const phi::ScalarArray& starts_array,
+                    const phi::ScalarArray& ends_array,
+                    const std::vector<int64_t>& infer_flags,
+                    const std::vector<int64_t>& decrease_axis,
+                    phi::DenseTensor* out) {
+  std::vector<int> axes(axes_t.begin(), axes_t.end());
   auto starts_int = starts_array.GetData();
   auto ends_int = ends_array.GetData();
-  std::vector<int> axes(axes_int.begin(), axes_int.end());
   std::vector<int> starts(starts_int.begin(), starts_int.end());
   std::vector<int> ends(ends_int.begin(), ends_int.end());
 
@@ -124,17 +127,19 @@ void SliceKernel(const Context& dev_ctx, const phi::DenseTensor& x,
 }
 
 template <typename T, typename Context>
-void SliceGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
-                     const phi::DenseTensor& out_grad,
-                     const phi::ScalarArray& axes_array,
-                     const phi::ScalarArray& starts_array,
-                     const phi::ScalarArray& ends_array,
-                     phi::DenseTensor* x_grad) {
-  auto axes_int = axes_array.GetData();
+void SliceGradRawKernel(const Context& dev_ctx,
+                        const phi::DenseTensor& x,
+                        const phi::DenseTensor& out_grad,
+                        const std::vector<int64_t>& axes_t,
+                        const phi::ScalarArray& starts_array,
+                        const phi::ScalarArray& ends_array,
+                        const std::vector<int64_t>& infer_flags,
+                        const std::vector<int64_t>& decrease_axis,
+                        phi::DenseTensor* x_grad) {
+  std::vector<int> axes(axes_t.begin(), axes_t.end());
   auto starts_int = starts_array.GetData();
   auto ends_int = ends_array.GetData();
 
-  std::vector<int> axes(axes_int.begin(), axes_int.end());
   std::vector<int> starts(starts_int.begin(), starts_int.end());
   std::vector<int> ends(ends_int.begin(), ends_int.end());
 
@@ -200,8 +205,8 @@ void SliceGradKernel(const Context& dev_ctx, const phi::DenseTensor& x,
 }  // namespace custom_kernel
 
 PD_REGISTER_PLUGIN_KERNEL(slice, Ascend910, ALL_LAYOUT,
-                          custom_kernel::SliceKernel, phi::dtype::float16,
+                          custom_kernel::SliceRawKernel, phi::dtype::float16,
                           float, double, int16_t, int32_t, int64_t, bool) {}
 PD_REGISTER_PLUGIN_KERNEL(slice_grad, Ascend910, ALL_LAYOUT,
-                          custom_kernel::SliceGradKernel, phi::dtype::float16,
+                          custom_kernel::SliceGradRawKernel, phi::dtype::float16,
                           float, double, int16_t, int32_t, int64_t, bool) {}
